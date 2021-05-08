@@ -1,0 +1,40 @@
+--- 
+title: | # if you indicate the tile, it'll create a new cover page
+  | Introduction to Machine Learning
+  | (NPFL054)
+# coverpage: true # will take the _assets/coverpage.pdf file as cover page
+subtitle: "Homework 2"
+author: "François Leroy, PhD student at CZU"
+date: "`r Sys.Date()`"
+
+## The default class 
+documentclass: report
+classoption: oneside # really important!!!!
+
+
+# Set font features
+fontsize: 12pt
+linestretch: 1.5
+
+# Geometry for the PDF: 
+# (seems to provoc a warning message linked to biblatex)
+geometry:
+  - left = 2cm
+  - right = 2cm
+  - top = 2cm
+  - bottom = 2cm
+
+
+## to colorize the biblio ref and the URLs
+colorlinks: true 
+
+link-citations: yes
+github-repo: FrsLry/HW1_ML_CUNI_leroy
+---
+
+```{r, echo = F}
+knitr::opts_chunk$set(warning = F,
+                      message = F)
+```
+
+# First task
