@@ -1,35 +1,23 @@
 --- 
-title: | # if you indicate the tile, it'll create a new cover page
+title: |
   | Introduction to Machine Learning
   | (NPFL054)
-# coverpage: true # will take the _assets/coverpage.pdf file as cover page
-subtitle: "Homework 2"
 author: "François Leroy, PhD student at CZU"
 date: "`r Sys.Date()`"
-
-## The default class 
+output: pdf_document
 documentclass: report
-classoption: oneside # really important!!!!
-
-
-# Set font features
+classoption: oneside
 fontsize: 12pt
 linestretch: 1.5
-
-# Geometry for the PDF: 
-# (seems to provoc a warning message linked to biblatex)
 geometry:
-  - left = 2cm
-  - right = 2cm
-  - top = 2cm
-  - bottom = 2cm
-
-
-## to colorize the biblio ref and the URLs
-colorlinks: true 
-
+- left = 2cm
+- right = 2cm
+- top = 2cm
+- bottom = 2cm
+colorlinks: yes
 link-citations: yes
 github-repo: FrsLry/HW1_ML_CUNI_leroy
+subtitle: Homework 2
 ---
 
 ```{r, echo = F}
@@ -37,4 +25,92 @@ knitr::opts_chunk$set(warning = F,
                       message = F)
 ```
 
-# First task
+# Set up the project {-}
+
+```{r}
+library(ISLR) # for the data
+library(tidyverse) # convenient
+library(rpart) # for decision trees
+library(randomForest) # for ensemble learning
+library(glmnet) # for regularized logistic regression
+library(ROCR) # for ROC curves
+```
+
+```{r}
+## Reproduce the result
+set.seed(123)
+## Create the splitting vector
+split <- sample(nrow(Caravan), 1000)
+## Create the test dataset
+d_test <- Caravan[split,]
+## Create the training dataset
+d_train <- Caravan[-split,]
+```
+
+
+# Task 1 - Data analysis
+
+* **First, check the distribution of the target attribute. What would be your precision if you select 100 examples by chance?**
+
+```{r}
+round(table(Caravan$Purchase), 2)
+```
+
+```{r, echo=F}
+Caravan %>% 
+  ggplot()+
+  geom_bar(aes(x = Purchase, y = ..prop.., group = 1), stat = "count")+
+  ylab("Proportion")+
+  theme_bw()
+```
+
+We can see that there is `r paste0(round(table(Caravan$Purchase)/nrow(Caravan), 2)[1]*100, "%")` of customers who didn't purchase  the insurance and that `r paste0(round(table(Caravan$Purchase)/nrow(Caravan), 2)[2]*100, "%")` who did. As the precision is the number of examples classified as *Yes* when the value is actually *Yes*, by chance, the precision should be `r round(table(Caravan$Purchase)/nrow(Caravan), 2)[2]`.
+
+* **1.a. Focus on the customer type MOSHOOFD: create a table with the number of customers that belong to each of 10 L2 groups and the percentage of customers that purchased a caravan insurance policy in each group. Comment the figures in the table. Then do the same for the customer subtype MOSTYPE (41 subgroups defined in L1).** 
+
+\underline{MOSHOOFD type:}
+
+```{r}
+Caravan %>% 
+  count(MOSHOOFD, Purchase) %>% 
+  group_by(MOSHOOFD) %>% 
+  summarise(size = sum(n),
+            purchase_prop = round(n[Purchase == "Yes"]/sum(n), 2)) %>% 
+  rename(group = MOSHOOFD) %>% 
+  kableExtra::kable()
+```
+
+From this first table, we can see that the customers that are more prone to purchase an insurance (13% of them) are the one belonging to the group 2, *i.e.* the *driven growers*. On the other hand, the customers belonging to the class 6 and 10, respectively the *cruising seniors* and the *farmers*, are less likely to subscribe to the insurance (only 2% in each group).
+
+\underline{MOSHOOFD type:}
+
+```{r}
+table <- 
+Caravan %>% 
+  count(MOSTYPE, Purchase) %>% 
+  group_by(MOSTYPE) %>% 
+  summarise(size = sum(n),
+            purchase_prop = round(n[Purchase == "Yes"]/sum(n), 2)) %>% 
+  rename(group = MOSTYPE) %>% 
+  arrange(desc(purchase_prop))
+## Display in 2 columns
+kableExtra::kable(list(table[1:(nrow(table)/2),], 
+                       table[((nrow(table)/2)+1):nrow(table),])) %>% 
+  kableExtra::kable_styling(latex_options = "HOLD_position")
+```
+
+The two groups more prone to buy an insurance are the group 8 and 12, which correspond respectively to *middle class families* and *affluent young families*. Thus, we can say that families are potential good targets to sell insurances. We can see that the class 25, 26, 27 and 29 all have a low proportion of individuals buying a insurance. They are all related to old people (*i.e.*, *Young seniors in the city*, *Own home elderly*, *Seniors in apartments*, *Porchless seniors: no front yard*). Thus, old people are not a good target to sell insurances. 
+
+**1.b. Analyze the relationship between features MOSHOOFD and MOSTYPE.**
+
+```{r}
+Caravan %>% 
+  ggplot(aes(y = MOSTYPE, x = MOSHOOFD))+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  theme_bw()
+```
+
+We can clearly see a relationship between these two features which are MOSHOOFD = *Customer main type* and MOSTYPE = *Customer Subtype*. This is expected because MOSTYPE is just a more precise social position. For instance, we can see that when $MOSHOOFD = 10$, $MOSTYPE = 40 | 41$. We can see that $MOSHOOFD = 10$ correspond to *Farmers* and that $MOSTYPE = 40 | 41$ are two subclasses of farmers: *Large family farms* and *Mixed rurals*, respectively. 
+
+# Task 2 - Model fitting, optimization, and selection
