@@ -28,6 +28,7 @@ knitr::opts_chunk$set(warning = F,
 # Set up the project {-}
 
 ```{r}
+rm(list = ls())
 library(ISLR) # for the data
 library(tidyverse) # convenient
 library(rpart) # for decision trees
@@ -63,6 +64,11 @@ Caravan %>%
   ylab("Proportion")+
   theme_bw()
 ```
+
+```{r}
+plot(dbinom(1:20, size = 100, prob = .06))
+```
+
 
 We can see that there is `r paste0(round(table(Caravan$Purchase)/nrow(Caravan), 2)[1]*100, "%")` of customers who didn't purchase  the insurance and that `r paste0(round(table(Caravan$Purchase)/nrow(Caravan), 2)[2]*100, "%")` who did. As the precision is the number of examples classified as *Yes* when the value is actually *Yes*, by chance, the precision should be `r round(table(Caravan$Purchase)/nrow(Caravan), 2)[2]`.
 
@@ -114,3 +120,143 @@ Caravan %>%
 We can clearly see a relationship between these two features which are MOSHOOFD = *Customer main type* and MOSTYPE = *Customer Subtype*. This is expected because MOSTYPE is just a more precise social position. For instance, we can see that when $MOSHOOFD = 10$, $MOSTYPE = 40 | 41$. We can see that $MOSHOOFD = 10$ correspond to *Farmers* and that $MOSTYPE = 40 | 41$ are two subclasses of farmers: *Large family farms* and *Mixed rurals*, respectively. 
 
 # Task 2 - Model fitting, optimization, and selection
+
+## Decision tree
+
+```{r}
+## Function to randomly extract the test dataset in d_train using always the same number of positive and negative values of Purchase
+prepare_cv_folds <-  function(k){
+  # Create the subsets data containing Purchase == Yes in one hand and Purchase == No in an other hand
+  pos_data <- d_train[d_train$Purchase == "Yes",]
+  neg_data <- d_train[d_train$Purchase == "No",]
+  ## Compute the size of each fold
+  fold.size.pos <- nrow(pos_data)%/%k
+  fold.size.neg <- nrow(neg_data)%/%k
+  ## Randomly rearrange the indexes
+  set.seed(12); s_pos <- sample(nrow(pos_data))
+  set.seed(12); s_neg <- sample(nrow(neg_data))
+  ## create the list that will contain the test folds
+  f.idx <-  list()
+  ## For each fold, extract the dataset that will be used as test
+  for(i in 1:k){
+      f.idx[[i]] <- 
+        rbind(pos_data[s_pos[(1 + (i-1)*fold.size.pos):(i*fold.size.pos)],],
+              neg_data[s_neg[(1 + (i-1)*fold.size.neg):(i*fold.size.neg)],])
+  }
+  return(f.idx)
+}
+## Use the function to create the 10 test datasets
+split_data <- prepare_cv_folds(10)
+```
+
+
+
+```{r, echo=F}
+set.seed(123)
+## Sequence of cp
+seq <- seq(1e-05, 0.001, length.out = 10)
+## table that will contain the auc for each fold
+auc_table <- tibble(auc = as.numeric())
+## table summarizing the cv for each cp
+dt_auc <- tibble(cp = as.numeric(),
+                 mean_auc = as.numeric(),
+                 sd = as.numeric(),
+                 low_CI = as.numeric(),
+                 high_CI  = as.numeric())
+## Loop over each cp
+for(j in 1:length(seq)){
+  ## Loop over each fold
+  for(i in 1:10){
+    ## Get the indexes of the test datasets
+    test_index <- rownames(split_data[[i]])
+    ## Learn decision tree without the test dataset 
+    DT <- rpart(Purchase ~ ., cp = seq[j],
+                data = d_train %>% filter(!rownames(.) %in% test_index))
+    pred <- predict(DT, newdata = split_data[[i]], type = "class")
+    auc <- performance(prediction(as.numeric(pred), 
+                                  as.numeric(split_data[[i]]$Purchase)),
+                measure="auc", fpr.stop = .2)
+    auc <- auc@y.values[[1]]
+    auc_table[i, 1] <- auc
+  }
+  ## Fill the table
+  dt_auc[j, 1] <- seq[j]
+  dt_auc[j, 2] <- mean(auc_table$auc)
+  dt_auc[j, 3] <- sd(auc_table$auc)
+  dt_auc[j, 4] <- t.test(auc_table$auc)$"conf.int"[1]
+  dt_auc[j, 5] <- t.test(auc_table$auc)$"conf.int"[2]
+}
+## Plot the table
+dt_auc %>% 
+  ggplot(aes(x = cp, y = mean_auc))+
+  geom_point()+
+  geom_point(aes(y = high_CI), color = "red")+
+  geom_point(aes(y = low_CI), color = "red")+
+  geom_pointrange(aes(ymin = mean_auc - sd, ymax = mean_auc + sd))+
+  ylim(0, .05)+
+  theme_bw()
+```
+The graphique above shows the mean AUC as a function of different values of cp. The black lines represent the standard deviation and the red dots the Confindence Intervals. As we can see on this plot, reducing the complexity parameter below $cp = 0.001$ doesn't change the mean $AUC_{0.2}$. This means that $cp = 0.001$ is already sufficiently low. As a low cp means a more complex model, we are looking for the highest value of cp maximizing the mean AUC. Thus, we can select $cp = 0.001$ to learn the decision tree. 
+
+However, as we can see, the mean AUC is always equal to 0.027, which is rather disappointing.
+
+
+## Random Forest
+
+
+```{r, echo=F}
+set.seed(123)
+## Sequence of mtry
+seq_mtry <- round(seq(2, 89, length.out = 6))
+## Sequence of trees
+seq_tree <- round(seq(10, 150, length.out = 10))
+## table that will contain the auc for each fold
+auc_table <- tibble(auc = as.numeric())
+## table summarizing the cv for each cp
+dt_auc <- tibble(ntree = as.numeric(),
+                 mean_auc = as.numeric(),
+                 sd = as.numeric(),
+                 low_CI = as.numeric(),
+                 high_CI  = as.numeric(),
+                 mtry = as.numeric())
+## Loop over each mtry
+for(m in 1:length(seq_mtry)){
+  ## Loop over each ntree
+  for(j in 1:length(seq_tree)){
+    ## Loop over each fold
+    for(i in 1:10){
+      ## Get the indexes of the test datasets
+      test_index <- rownames(split_data[[i]])
+      ## Learn decision tree without the test dataset 
+      DT <- randomForest(Purchase ~ ., ntree = seq_tree[j], mtry = seq_mtry[m],
+                  data = d_train %>% filter(!rownames(.) %in% test_index))
+      pred <- predict(DT, newdata = split_data[[i]], type = "class")
+      auc <- performance(prediction(as.numeric(pred), 
+                                    as.numeric(split_data[[i]]$Purchase)),
+                  measure="auc", fpr.stop = .2)
+      auc <- auc@y.values[[1]]
+      auc_table[i, 1] <- auc
+    }
+    ## Fill the table
+    dt_auc[nrow(dt_auc)+1, 1] <- seq_tree[j]
+    dt_auc[nrow(dt_auc), 2] <- mean(auc_table$auc)
+    dt_auc[nrow(dt_auc), 3] <- sd(auc_table$auc)
+    dt_auc[nrow(dt_auc), 4] <- ifelse(length(unique(auc_table$auc)) == 1, NA, t.test(auc_table$auc)$"conf.int"[1])
+    dt_auc[nrow(dt_auc), 5] <- ifelse(length(unique(auc_table$auc)) == 1, NA, t.test(auc_table$auc)$"conf.int"[2])  
+    dt_auc[nrow(dt_auc), 6] <- seq_mtry[m]
+  }
+  
+}
+## Plot the table
+dt_auc %>% 
+  ggplot(aes(x = ntree, y = mean_auc))+
+  geom_point()+
+  geom_point(aes(y = high_CI), color = "red")+
+  geom_point(aes(y = low_CI), color = "red")+
+  facet_wrap(. ~ mtry)+
+  geom_pointrange(aes(ymin = mean_auc - sd, ymax = mean_auc + sd))+
+  ylim(0, .05)+
+  theme_bw()
+```
+
+This plot shows the mean auc as a function of the number of trees. Each square correspond to a value of mtry indicated in the grey square. As we can see, the highest value of $AUC_{0.2}$ is for $mtry = 72$ and $ntree = 10$.
