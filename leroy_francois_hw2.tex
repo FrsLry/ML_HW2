@@ -196,7 +196,7 @@
 \makeatother
 \subtitle{Homework 2}
 \author{François Leroy, PhD student at CZU}
-\date{2021-05-10}
+\date{2021-05-12}
 
 % to include pdf
 \usepackage{pdfpages}
@@ -462,9 +462,12 @@ We can clearly see a relationship between these two features which are MOSHOOFD 
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\CommentTok{## Function to randomly extract the test dataset in d_train using always the same number of positive and negative values of Purchase}
+\CommentTok{## Function to randomly extract the test dataset in d_train }
+\CommentTok{## using always the same number of positive and negative }
+\CommentTok{## values of Purchase}
 \NormalTok{prepare_cv_folds <-}\StringTok{  }\ControlFlowTok{function}\NormalTok{(k)\{}
-  \CommentTok{# Create the subsets data containing Purchase == Yes in one hand and Purchase == No in an other hand}
+  \CommentTok{# Create the subsets data containing Purchase == Yes }
+  \CommentTok{# in one hand and Purchase == No in an other hand}
 \NormalTok{  pos_data <-}\StringTok{ }\NormalTok{d_train[d_train}\OperatorTok{$}\NormalTok{Purchase }\OperatorTok{==}\StringTok{ "Yes"}\NormalTok{,]}
 \NormalTok{  neg_data <-}\StringTok{ }\NormalTok{d_train[d_train}\OperatorTok{$}\NormalTok{Purchase }\OperatorTok{==}\StringTok{ "No"}\NormalTok{,]}
   \CommentTok{## Compute the size of each fold}
@@ -488,121 +491,25 @@ We can clearly see a relationship between these two features which are MOSHOOFD 
 \end{Highlighting}
 \end{Shaded}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{set.seed}\NormalTok{(}\DecValTok{123}\NormalTok{)}
-\CommentTok{## Sequence of cp}
-\NormalTok{seq <-}\StringTok{ }\KeywordTok{seq}\NormalTok{(}\FloatTok{1e-05}\NormalTok{, }\FloatTok{0.001}\NormalTok{, }\DataTypeTok{length.out =} \DecValTok{10}\NormalTok{)}
-\CommentTok{## table that will contain the auc for each fold}
-\NormalTok{auc_table <-}\StringTok{ }\KeywordTok{tibble}\NormalTok{(}\DataTypeTok{auc =} \KeywordTok{as.numeric}\NormalTok{())}
-\CommentTok{## table summarizing the cv for each cp}
-\NormalTok{dt_auc <-}\StringTok{ }\KeywordTok{tibble}\NormalTok{(}\DataTypeTok{cp =} \KeywordTok{as.numeric}\NormalTok{(),}
-                 \DataTypeTok{mean_auc =} \KeywordTok{as.numeric}\NormalTok{(),}
-                 \DataTypeTok{sd =} \KeywordTok{as.numeric}\NormalTok{(),}
-                 \DataTypeTok{low_CI =} \KeywordTok{as.numeric}\NormalTok{(),}
-                 \DataTypeTok{high_CI  =} \KeywordTok{as.numeric}\NormalTok{())}
-\CommentTok{## Loop over each cp}
-\ControlFlowTok{for}\NormalTok{(j }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\KeywordTok{length}\NormalTok{(seq))\{}
-  \CommentTok{## Loop over each fold}
-  \ControlFlowTok{for}\NormalTok{(i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\DecValTok{10}\NormalTok{)\{}
-    \CommentTok{## Get the indexes of the test datasets}
-\NormalTok{    test_index <-}\StringTok{ }\KeywordTok{rownames}\NormalTok{(split_data[[i]])}
-    \CommentTok{## Learn decision tree without the test dataset }
-\NormalTok{    DT <-}\StringTok{ }\KeywordTok{rpart}\NormalTok{(Purchase }\OperatorTok{~}\StringTok{ }\NormalTok{., }\DataTypeTok{cp =}\NormalTok{ seq[j],}
-                \DataTypeTok{data =}\NormalTok{ d_train }\OperatorTok{%>%}\StringTok{ }\KeywordTok{filter}\NormalTok{(}\OperatorTok{!}\KeywordTok{rownames}\NormalTok{(.) }\OperatorTok{%in%}\StringTok{ }\NormalTok{test_index))}
-\NormalTok{    pred <-}\StringTok{ }\KeywordTok{predict}\NormalTok{(DT, }\DataTypeTok{newdata =}\NormalTok{ split_data[[i]], }\DataTypeTok{type =} \StringTok{"class"}\NormalTok{)}
-\NormalTok{    auc <-}\StringTok{ }\KeywordTok{performance}\NormalTok{(}\KeywordTok{prediction}\NormalTok{(}\KeywordTok{as.numeric}\NormalTok{(pred), }
-                                  \KeywordTok{as.numeric}\NormalTok{(split_data[[i]]}\OperatorTok{$}\NormalTok{Purchase)),}
-                \DataTypeTok{measure=}\StringTok{"auc"}\NormalTok{, }\DataTypeTok{fpr.stop =} \FloatTok{.2}\NormalTok{)}
-\NormalTok{    auc <-}\StringTok{ }\NormalTok{auc}\OperatorTok{@}\NormalTok{y.values[[}\DecValTok{1}\NormalTok{]]}
-\NormalTok{    auc_table[i, }\DecValTok{1}\NormalTok{] <-}\StringTok{ }\NormalTok{auc}
-\NormalTok{  \}}
-  \CommentTok{## Fill the table}
-\NormalTok{  dt_auc[j, }\DecValTok{1}\NormalTok{] <-}\StringTok{ }\NormalTok{seq[j]}
-\NormalTok{  dt_auc[j, }\DecValTok{2}\NormalTok{] <-}\StringTok{ }\KeywordTok{mean}\NormalTok{(auc_table}\OperatorTok{$}\NormalTok{auc)}
-\NormalTok{  dt_auc[j, }\DecValTok{3}\NormalTok{] <-}\StringTok{ }\KeywordTok{sd}\NormalTok{(auc_table}\OperatorTok{$}\NormalTok{auc)}
-\NormalTok{  dt_auc[j, }\DecValTok{4}\NormalTok{] <-}\StringTok{ }\KeywordTok{t.test}\NormalTok{(auc_table}\OperatorTok{$}\NormalTok{auc)}\OperatorTok{$}\StringTok{"conf.int"}\NormalTok{[}\DecValTok{1}\NormalTok{]}
-\NormalTok{  dt_auc[j, }\DecValTok{5}\NormalTok{] <-}\StringTok{ }\KeywordTok{t.test}\NormalTok{(auc_table}\OperatorTok{$}\NormalTok{auc)}\OperatorTok{$}\StringTok{"conf.int"}\NormalTok{[}\DecValTok{2}\NormalTok{]}
-\NormalTok{\}}
-\CommentTok{## Plot the table}
-\NormalTok{dt_auc }\OperatorTok{%>%}\StringTok{ }
-\StringTok{  }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ cp, }\DataTypeTok{y =}\NormalTok{ mean_auc))}\OperatorTok{+}
-\StringTok{  }\KeywordTok{geom_point}\NormalTok{()}\OperatorTok{+}
-\StringTok{  }\KeywordTok{geom_point}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{y =}\NormalTok{ high_CI), }\DataTypeTok{color =} \StringTok{"red"}\NormalTok{)}\OperatorTok{+}
-\StringTok{  }\KeywordTok{geom_point}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{y =}\NormalTok{ low_CI), }\DataTypeTok{color =} \StringTok{"red"}\NormalTok{)}\OperatorTok{+}
-\StringTok{  }\KeywordTok{geom_pointrange}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{ymin =}\NormalTok{ mean_auc }\OperatorTok{-}\StringTok{ }\NormalTok{sd, }\DataTypeTok{ymax =}\NormalTok{ mean_auc }\OperatorTok{+}\StringTok{ }\NormalTok{sd))}\OperatorTok{+}
-\StringTok{  }\KeywordTok{ylim}\NormalTok{(}\DecValTok{0}\NormalTok{, }\FloatTok{.05}\NormalTok{)}\OperatorTok{+}
-\StringTok{  }\KeywordTok{theme_bw}\NormalTok{()}
-\end{Highlighting}
-\end{Shaded}
+\includegraphics[width=29.17in]{data/cv_dt}
 
-\includegraphics{leroy_francois_hw2_files/figure-latex/unnamed-chunk-11-1.pdf}
-The graphique above shows the mean AUC as a function of different values of cp.~The black lines represent the standard deviation and the red dots the Confindence Intervals. As we can see on this plot, reducing the complexity parameter below \(cp = 0.001\) doesn't change the mean \(AUC_{0.2}\). This means that \(cp = 0.001\) is already sufficiently low. As a low cp means a more complex model, we are looking for the highest value of cp maximizing the mean AUC. Thus, we can select \(cp = 0.001\) to learn the decision tree.
+The graphique above shows the mean AUC as a function of different values of cp.~The black lines represent the standard deviation and the red dots the Confidence Intervals. As we can see on this plot, reducing the complexity parameter below \(cp = 0.001\) doesn't change the mean \(AUC_{0.2}\). This means that \(cp = 0.001\) is already sufficiently low. As a low cp means a more complex model, we are looking for the highest value of cp maximizing the mean AUC. Thus, we can select \(cp = 0.001\) to learn the decision tree.
 
 However, as we can see, the mean AUC is always equal to 0.027, which is rather disappointing.
 
 \hypertarget{random-forest}{%
 \section{Random Forest}\label{random-forest}}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{set.seed}\NormalTok{(}\DecValTok{123}\NormalTok{)}
-\CommentTok{## Sequence of mtry}
-\NormalTok{seq_mtry <-}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{seq}\NormalTok{(}\DecValTok{2}\NormalTok{, }\DecValTok{89}\NormalTok{, }\DataTypeTok{length.out =} \DecValTok{6}\NormalTok{))}
-\CommentTok{## Sequence of trees}
-\NormalTok{seq_tree <-}\StringTok{ }\KeywordTok{round}\NormalTok{(}\KeywordTok{seq}\NormalTok{(}\DecValTok{10}\NormalTok{, }\DecValTok{150}\NormalTok{, }\DataTypeTok{length.out =} \DecValTok{10}\NormalTok{))}
-\CommentTok{## table that will contain the auc for each fold}
-\NormalTok{auc_table <-}\StringTok{ }\KeywordTok{tibble}\NormalTok{(}\DataTypeTok{auc =} \KeywordTok{as.numeric}\NormalTok{())}
-\CommentTok{## table summarizing the cv for each cp}
-\NormalTok{dt_auc <-}\StringTok{ }\KeywordTok{tibble}\NormalTok{(}\DataTypeTok{ntree =} \KeywordTok{as.numeric}\NormalTok{(),}
-                 \DataTypeTok{mean_auc =} \KeywordTok{as.numeric}\NormalTok{(),}
-                 \DataTypeTok{sd =} \KeywordTok{as.numeric}\NormalTok{(),}
-                 \DataTypeTok{low_CI =} \KeywordTok{as.numeric}\NormalTok{(),}
-                 \DataTypeTok{high_CI  =} \KeywordTok{as.numeric}\NormalTok{(),}
-                 \DataTypeTok{mtry =} \KeywordTok{as.numeric}\NormalTok{())}
-\CommentTok{## Loop over each mtry}
-\ControlFlowTok{for}\NormalTok{(m }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\KeywordTok{length}\NormalTok{(seq_mtry))\{}
-  \CommentTok{## Loop over each ntree}
-  \ControlFlowTok{for}\NormalTok{(j }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\KeywordTok{length}\NormalTok{(seq_tree))\{}
-    \CommentTok{## Loop over each fold}
-    \ControlFlowTok{for}\NormalTok{(i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\DecValTok{10}\NormalTok{)\{}
-      \CommentTok{## Get the indexes of the test datasets}
-\NormalTok{      test_index <-}\StringTok{ }\KeywordTok{rownames}\NormalTok{(split_data[[i]])}
-      \CommentTok{## Learn decision tree without the test dataset }
-\NormalTok{      DT <-}\StringTok{ }\KeywordTok{randomForest}\NormalTok{(Purchase }\OperatorTok{~}\StringTok{ }\NormalTok{., }\DataTypeTok{ntree =}\NormalTok{ seq_tree[j], }\DataTypeTok{mtry =}\NormalTok{ seq_mtry[m],}
-                  \DataTypeTok{data =}\NormalTok{ d_train }\OperatorTok{%>%}\StringTok{ }\KeywordTok{filter}\NormalTok{(}\OperatorTok{!}\KeywordTok{rownames}\NormalTok{(.) }\OperatorTok{%in%}\StringTok{ }\NormalTok{test_index))}
-\NormalTok{      pred <-}\StringTok{ }\KeywordTok{predict}\NormalTok{(DT, }\DataTypeTok{newdata =}\NormalTok{ split_data[[i]], }\DataTypeTok{type =} \StringTok{"class"}\NormalTok{)}
-\NormalTok{      auc <-}\StringTok{ }\KeywordTok{performance}\NormalTok{(}\KeywordTok{prediction}\NormalTok{(}\KeywordTok{as.numeric}\NormalTok{(pred), }
-                                    \KeywordTok{as.numeric}\NormalTok{(split_data[[i]]}\OperatorTok{$}\NormalTok{Purchase)),}
-                  \DataTypeTok{measure=}\StringTok{"auc"}\NormalTok{, }\DataTypeTok{fpr.stop =} \FloatTok{.2}\NormalTok{)}
-\NormalTok{      auc <-}\StringTok{ }\NormalTok{auc}\OperatorTok{@}\NormalTok{y.values[[}\DecValTok{1}\NormalTok{]]}
-\NormalTok{      auc_table[i, }\DecValTok{1}\NormalTok{] <-}\StringTok{ }\NormalTok{auc}
-\NormalTok{    \}}
-    \CommentTok{## Fill the table}
-\NormalTok{    dt_auc[}\KeywordTok{nrow}\NormalTok{(dt_auc)}\OperatorTok{+}\DecValTok{1}\NormalTok{, }\DecValTok{1}\NormalTok{] <-}\StringTok{ }\NormalTok{seq_tree[j]}
-\NormalTok{    dt_auc[}\KeywordTok{nrow}\NormalTok{(dt_auc), }\DecValTok{2}\NormalTok{] <-}\StringTok{ }\KeywordTok{mean}\NormalTok{(auc_table}\OperatorTok{$}\NormalTok{auc)}
-\NormalTok{    dt_auc[}\KeywordTok{nrow}\NormalTok{(dt_auc), }\DecValTok{3}\NormalTok{] <-}\StringTok{ }\KeywordTok{sd}\NormalTok{(auc_table}\OperatorTok{$}\NormalTok{auc)}
-\NormalTok{    dt_auc[}\KeywordTok{nrow}\NormalTok{(dt_auc), }\DecValTok{4}\NormalTok{] <-}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(}\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(auc_table}\OperatorTok{$}\NormalTok{auc)) }\OperatorTok{==}\StringTok{ }\DecValTok{1}\NormalTok{, }\OtherTok{NA}\NormalTok{, }\KeywordTok{t.test}\NormalTok{(auc_table}\OperatorTok{$}\NormalTok{auc)}\OperatorTok{$}\StringTok{"conf.int"}\NormalTok{[}\DecValTok{1}\NormalTok{])}
-\NormalTok{    dt_auc[}\KeywordTok{nrow}\NormalTok{(dt_auc), }\DecValTok{5}\NormalTok{] <-}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(}\KeywordTok{length}\NormalTok{(}\KeywordTok{unique}\NormalTok{(auc_table}\OperatorTok{$}\NormalTok{auc)) }\OperatorTok{==}\StringTok{ }\DecValTok{1}\NormalTok{, }\OtherTok{NA}\NormalTok{, }\KeywordTok{t.test}\NormalTok{(auc_table}\OperatorTok{$}\NormalTok{auc)}\OperatorTok{$}\StringTok{"conf.int"}\NormalTok{[}\DecValTok{2}\NormalTok{])  }
-\NormalTok{    dt_auc[}\KeywordTok{nrow}\NormalTok{(dt_auc), }\DecValTok{6}\NormalTok{] <-}\StringTok{ }\NormalTok{seq_mtry[m]}
-\NormalTok{  \}}
-  
-\NormalTok{\}}
-\CommentTok{## Plot the table}
-\NormalTok{dt_auc }\OperatorTok{%>%}\StringTok{ }
-\StringTok{  }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ ntree, }\DataTypeTok{y =}\NormalTok{ mean_auc))}\OperatorTok{+}
-\StringTok{  }\KeywordTok{geom_point}\NormalTok{()}\OperatorTok{+}
-\StringTok{  }\KeywordTok{geom_point}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{y =}\NormalTok{ high_CI), }\DataTypeTok{color =} \StringTok{"red"}\NormalTok{)}\OperatorTok{+}
-\StringTok{  }\KeywordTok{geom_point}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{y =}\NormalTok{ low_CI), }\DataTypeTok{color =} \StringTok{"red"}\NormalTok{)}\OperatorTok{+}
-\StringTok{  }\KeywordTok{facet_wrap}\NormalTok{(. }\OperatorTok{~}\StringTok{ }\NormalTok{mtry)}\OperatorTok{+}
-\StringTok{  }\KeywordTok{geom_pointrange}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{ymin =}\NormalTok{ mean_auc }\OperatorTok{-}\StringTok{ }\NormalTok{sd, }\DataTypeTok{ymax =}\NormalTok{ mean_auc }\OperatorTok{+}\StringTok{ }\NormalTok{sd))}\OperatorTok{+}
-\StringTok{  }\KeywordTok{ylim}\NormalTok{(}\DecValTok{0}\NormalTok{, }\FloatTok{.05}\NormalTok{)}\OperatorTok{+}
-\StringTok{  }\KeywordTok{theme_bw}\NormalTok{()}
-\end{Highlighting}
-\end{Shaded}
+\includegraphics[width=24.74in]{data/cv_rf}
 
-\includegraphics{leroy_francois_hw2_files/figure-latex/unnamed-chunk-12-1.pdf}
-This plots shows the mean auc as a function of the number of trees. Each square correspond to a value of mtry indicated in the grey square. As we can see, the highest value of \(AUC_{0.2}\) is for \(mtry = 72\) and \(ntree = 10\).
+This plot shows the mean auc as a function of the number of trees. Each square correspond to a value of mtry indicated in the grey square. As we can see, the highest value of \(AUC_{0.2}\) is for \(mtry = 72\) and \(ntree = 10\).
+
+However, we must keep in mind that the Confidence Intervals always overlap, which means that the difference between the mean \(AUC_{0.2}\) are not significant.
+
+\hypertarget{regularized-logistic-regression}{%
+\section{Regularized logistic regression}\label{regularized-logistic-regression}}
+
+\includegraphics[width=29.17in]{data/cv_lr}
 
 
 \singlespacing % reset the spacing of the bibliography style

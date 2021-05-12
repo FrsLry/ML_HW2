@@ -124,9 +124,12 @@ We can clearly see a relationship between these two features which are MOSHOOFD 
 ## Decision tree
 
 ```{r}
-## Function to randomly extract the test dataset in d_train using always the same number of positive and negative values of Purchase
+## Function to randomly extract the test dataset in d_train 
+## using always the same number of positive and negative 
+## values of Purchase
 prepare_cv_folds <-  function(k){
-  # Create the subsets data containing Purchase == Yes in one hand and Purchase == No in an other hand
+  # Create the subsets data containing Purchase == Yes 
+  # in one hand and Purchase == No in an other hand
   pos_data <- d_train[d_train$Purchase == "Yes",]
   neg_data <- d_train[d_train$Purchase == "No",]
   ## Compute the size of each fold
@@ -151,7 +154,7 @@ split_data <- prepare_cv_folds(10)
 
 
 
-```{r, echo=F}
+```{r, echo=F, eval=F}
 set.seed(123)
 ## Sequence of cp
 seq <- seq(1e-05, 0.001, length.out = 10)
@@ -194,9 +197,16 @@ dt_auc %>%
   geom_point(aes(y = low_CI), color = "red")+
   geom_pointrange(aes(ymin = mean_auc - sd, ymax = mean_auc + sd))+
   ylim(0, .05)+
-  theme_bw()
+  theme_bw() 
+ggsave("data/cv_dt.png")
 ```
-The graphique above shows the mean AUC as a function of different values of cp. The black lines represent the standard deviation and the red dots the Confindence Intervals. As we can see on this plot, reducing the complexity parameter below $cp = 0.001$ doesn't change the mean $AUC_{0.2}$. This means that $cp = 0.001$ is already sufficiently low. As a low cp means a more complex model, we are looking for the highest value of cp maximizing the mean AUC. Thus, we can select $cp = 0.001$ to learn the decision tree. 
+
+```{r, echo=F}
+knitr::include_graphics("data/cv_dt.png")
+```
+
+
+The graphique above shows the mean AUC as a function of different values of cp. The black lines represent the standard deviation and the red dots the Confidence Intervals. As we can see on this plot, reducing the complexity parameter below $cp = 0.001$ doesn't change the mean $AUC_{0.2}$. This means that $cp = 0.001$ is already sufficiently low. As a low cp means a more complex model, we are looking for the highest value of cp maximizing the mean AUC. Thus, we can select $cp = 0.001$ to learn the decision tree. 
 
 However, as we can see, the mean AUC is always equal to 0.027, which is rather disappointing.
 
@@ -204,7 +214,7 @@ However, as we can see, the mean AUC is always equal to 0.027, which is rather d
 ## Random Forest
 
 
-```{r, echo=F}
+```{r, echo=F, eval=F}
 set.seed(123)
 ## Sequence of mtry
 seq_mtry <- round(seq(2, 89, length.out = 6))
@@ -257,6 +267,84 @@ dt_auc %>%
   geom_pointrange(aes(ymin = mean_auc - sd, ymax = mean_auc + sd))+
   ylim(0, .05)+
   theme_bw()
+
+ggsave("data/cv_rf.png")
 ```
 
+```{r, echo=F}
+knitr::include_graphics("data/cv_rf.png")
+```
+
+
 This plot shows the mean auc as a function of the number of trees. Each square correspond to a value of mtry indicated in the grey square. As we can see, the highest value of $AUC_{0.2}$ is for $mtry = 72$ and $ntree = 10$.
+
+However, we must keep in mind that the Confidence Intervals always overlap, which means that the difference between the mean $AUC_{0.2}$ are not significant. 
+
+## Regularized logistic regression
+
+```{r, echo=F, eval=F}
+# 5 different alpha values
+alphas <- seq(0, 1, length.out = 5)
+# 100 different lambda values
+grid <- 10^seq(4, -2, length = 10)
+## table that will contain the auc for each fold
+auc_table <- tibble(auc = as.numeric())
+## Table that will contain the summarized info
+glmnet_table <- tibble(alpha = as.numeric(),
+                       lambda = as.numeric(),
+                       mean_auc = as.numeric(),
+                       sd = as.numeric(),
+                       low_CI = as.numeric(),
+                       high_CI  = as.numeric())
+## Loop over each alpha
+for(iii in 1:length(alphas)){
+  ## Loop over each lambda
+  for(ii in 1:length(grid)){
+    ## Loop over each fold
+    for(i in 1:10){
+      ## Get the indexes of the test datasets
+      test_index <- rownames(split_data[[i]])
+      ## Create the temporary training data
+      temp_train <- d_train %>% filter(!rownames(.) %in% test_index)
+      ## Shape the train data for glmnet()
+      x <- model.matrix(Purchase~., data = temp_train)
+      y <- data.matrix(ifelse(temp_train$Purchase == "No", 0, 1))
+      ## Shape the test data
+      x.test <- model.matrix(Purchase~., data = split_data[[i]])
+      y.test <- data.matrix(ifelse(split_data[[i]]$Purchase == "No", 0, 1))
+      ## Learn the model
+      model <- glmnet(x, y, alpha = alphas[iii], family = "binomial", lambda = grid[ii])
+      ## Predict with the model
+      pred <- predict(model, newx = x.test, type = "class")
+      ## Compute auc
+      auc <- performance(prediction(as.numeric(pred), 
+                                      as.numeric(y.test)),
+                    measure="auc", fpr.stop = .2)
+      auc <- auc@y.values[[1]]
+      auc_table[i, 1] <- auc
+    }
+    glmnet_table[nrow(glmnet_table)+1, 1] <- alphas[iii]
+    glmnet_table[nrow(glmnet_table), 2] <- grid[ii] 
+    glmnet_table[nrow(glmnet_table), 3] <- mean(auc_table$auc)
+    glmnet_table[nrow(glmnet_table), 4] <- sd(auc_table$auc)
+    glmnet_table[nrow(glmnet_table), 5] <- ifelse(length(unique(auc_table$auc)) == 1, NA, t.test(auc_table$auc)$"conf.int"[1])
+    glmnet_table[nrow(glmnet_table), 6]<- ifelse(length(unique(auc_table$auc)) == 1, NA, t.test(auc_table$auc)$"conf.int"[2])
+  }
+}
+## Plot
+glmnet_table %>% 
+  ggplot(aes(x = as.factor(lambda), y = mean_auc))+
+  geom_point()+
+  geom_point(aes(y = high_CI), color = "red")+
+  geom_point(aes(y = low_CI), color = "red")+
+  facet_wrap(. ~ alpha)+
+  geom_pointrange(aes(ymin = mean_auc - sd, ymax = mean_auc + sd))+
+  ylim(0, .05)+
+  theme_bw()
+ggsave("data/cv_lr.png")
+```
+
+```{r, echo=F}
+knitr::include_graphics("data/cv_lr.png")
+```
+
