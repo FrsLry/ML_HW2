@@ -69,10 +69,10 @@ Caravan %>%
 plot(dbinom(1:20, size = 100, prob = .06))
 ```
 
-
 We can see that there is `r paste0(round(table(Caravan$Purchase)/nrow(Caravan), 2)[1]*100, "%")` of customers who didn't purchase  the insurance and that `r paste0(round(table(Caravan$Purchase)/nrow(Caravan), 2)[2]*100, "%")` who did. As the precision is the number of examples classified as *Yes* when the value is actually *Yes*, by chance, the precision should be `r round(table(Caravan$Purchase)/nrow(Caravan), 2)[2]`.
 
 * **1.a. Focus on the customer type MOSHOOFD: create a table with the number of customers that belong to each of 10 L2 groups and the percentage of customers that purchased a caravan insurance policy in each group. Comment the figures in the table. Then do the same for the customer subtype MOSTYPE (41 subgroups defined in L1).** 
+
 
 \underline{MOSHOOFD type:}
 
@@ -172,15 +172,24 @@ for(j in 1:length(seq)){
   for(i in 1:10){
     ## Get the indexes of the test datasets
     test_index <- rownames(split_data[[i]])
+    cv_train_data <-
+      d_train %>% 
+      filter(!rownames(.) %in% test_index) %>% 
+      mutate(Purchase = ifelse(Purchase == "Yes", 1, 0)) %>% 
+      mutate(Purchase = as.factor(Purchase))
+    cv_test_data <-
+      split_data[[i]] %>% 
+        mutate(Purchase = ifelse(Purchase == "Yes", 1, 0)) %>% 
+        mutate(Purchase = as.factor(Purchase))
     ## Learn decision tree without the test dataset 
     DT <- rpart(Purchase ~ ., cp = seq[j],
-                data = d_train %>% filter(!rownames(.) %in% test_index))
-    pred <- predict(DT, newdata = split_data[[i]], type = "class")
-    auc <- performance(prediction(as.numeric(pred), 
-                                  as.numeric(split_data[[i]]$Purchase)),
-                measure="auc", fpr.stop = .2)
+                data = cv_train_data)
+    pred <- predict(DT, (cv_test_data %>% select(-Purchase)), type = "prob")[,2]
+    p <- prediction(pred, cv_test_data$Purchase)
+    auc <- performance(p, measure="auc", fpr.stop = .2)
     auc <- auc@y.values[[1]]
     auc_table[i, 1] <- auc
+    # plot(performance(p, measure = 'tpr', x.measure = 'fpr'))
   }
   ## Fill the table
   dt_auc[j, 1] <- seq[j]
@@ -196,10 +205,12 @@ dt_auc %>%
   geom_point(aes(y = high_CI), color = "red")+
   geom_point(aes(y = low_CI), color = "red")+
   geom_pointrange(aes(ymin = mean_auc - sd, ymax = mean_auc + sd))+
-  ylim(0, .05)+
+  # ylim(0, .05)+
   theme_bw() 
 ggsave("data/cv_dt.png")
 ```
+
+
 
 ```{r, echo=F}
 knitr::include_graphics("data/cv_dt.png")
@@ -237,22 +248,33 @@ for(m in 1:length(seq_mtry)){
     for(i in 1:10){
       ## Get the indexes of the test datasets
       test_index <- rownames(split_data[[i]])
+      cv_train_data <-
+        d_train %>% 
+        filter(!rownames(.) %in% test_index) %>% 
+        mutate(Purchase = ifelse(Purchase == "Yes", 1, 0)) %>% 
+        mutate(Purchase = as.factor(Purchase))
+      cv_test_data <-
+        split_data[[i]] %>% 
+        mutate(Purchase = ifelse(Purchase == "Yes", 1, 0)) %>% 
+        mutate(Purchase = as.factor(Purchase))
       ## Learn decision tree without the test dataset 
       DT <- randomForest(Purchase ~ ., ntree = seq_tree[j], mtry = seq_mtry[m],
-                  data = d_train %>% filter(!rownames(.) %in% test_index))
-      pred <- predict(DT, newdata = split_data[[i]], type = "class")
-      auc <- performance(prediction(as.numeric(pred), 
-                                    as.numeric(split_data[[i]]$Purchase)),
-                  measure="auc", fpr.stop = .2)
+                  data = cv_train_data)
+      pred <- predict(DT, (cv_test_data %>% select(-Purchase)), type = "prob")[,2]
+      p <- prediction(pred, cv_test_data$Purchase)
+      auc <- performance(p, measure="auc", fpr.stop = .2)
       auc <- auc@y.values[[1]]
       auc_table[i, 1] <- auc
+      # plot(performance(p, measure = 'tpr', x.measure = 'fpr'))
     }
     ## Fill the table
     dt_auc[nrow(dt_auc)+1, 1] <- seq_tree[j]
     dt_auc[nrow(dt_auc), 2] <- mean(auc_table$auc)
     dt_auc[nrow(dt_auc), 3] <- sd(auc_table$auc)
-    dt_auc[nrow(dt_auc), 4] <- ifelse(length(unique(auc_table$auc)) == 1, NA, t.test(auc_table$auc)$"conf.int"[1])
-    dt_auc[nrow(dt_auc), 5] <- ifelse(length(unique(auc_table$auc)) == 1, NA, t.test(auc_table$auc)$"conf.int"[2])  
+    dt_auc[nrow(dt_auc), 4] <- ifelse(length(unique(auc_table$auc)) == 1,
+                                      NA, t.test(auc_table$auc)$"conf.int"[1])
+    dt_auc[nrow(dt_auc), 5] <- ifelse(length(unique(auc_table$auc)) == 1, 
+                                      NA, t.test(auc_table$auc)$"conf.int"[2])  
     dt_auc[nrow(dt_auc), 6] <- seq_mtry[m]
   }
   
@@ -265,7 +287,7 @@ dt_auc %>%
   geom_point(aes(y = low_CI), color = "red")+
   facet_wrap(. ~ mtry)+
   geom_pointrange(aes(ymin = mean_auc - sd, ymax = mean_auc + sd))+
-  ylim(0, .05)+
+  # ylim(0, .05)+
   theme_bw()
 
 ggsave("data/cv_rf.png")
@@ -286,7 +308,7 @@ However, we must keep in mind that the Confidence Intervals always overlap, whic
 # 5 different alpha values
 alphas <- seq(0, 1, length.out = 5)
 # 100 different lambda values
-grid <- 10^seq(4, -2, length = 10)
+grid <- round(10^seq(4, -2, length = 10), 2)
 ## table that will contain the auc for each fold
 auc_table <- tibble(auc = as.numeric())
 ## Table that will contain the summarized info
@@ -304,31 +326,40 @@ for(iii in 1:length(alphas)){
     for(i in 1:10){
       ## Get the indexes of the test datasets
       test_index <- rownames(split_data[[i]])
-      ## Create the temporary training data
-      temp_train <- d_train %>% filter(!rownames(.) %in% test_index)
+      cv_train_data <-
+        d_train %>% 
+        filter(!rownames(.) %in% test_index) %>% 
+        mutate(Purchase = ifelse(Purchase == "Yes", 1, 0)) %>% 
+        mutate(Purchase = as.factor(Purchase))
+      cv_test_data <-
+        split_data[[i]] %>% 
+        mutate(Purchase = ifelse(Purchase == "Yes", 1, 0)) %>% 
+        mutate(Purchase = as.factor(Purchase))
       ## Shape the train data for glmnet()
-      x <- model.matrix(Purchase~., data = temp_train)
-      y <- data.matrix(ifelse(temp_train$Purchase == "No", 0, 1))
+      x <- model.matrix(Purchase~., data = cv_train_data)
+      y <- data.matrix(cv_train_data$Purchase)
       ## Shape the test data
-      x.test <- model.matrix(Purchase~., data = split_data[[i]])
-      y.test <- data.matrix(ifelse(split_data[[i]]$Purchase == "No", 0, 1))
+      x.test <- model.matrix(Purchase~., data = cv_test_data)
+      y.test <- data.matrix(cv_test_data$Purchase)
       ## Learn the model
-      model <- glmnet(x, y, alpha = alphas[iii], family = "binomial", lambda = grid[ii])
+      model <- glmnet(x, y, alpha = alphas[iii], family = "gaussian", lambda = grid[ii])
       ## Predict with the model
-      pred <- predict(model, newx = x.test, type = "class")
+      pred <- predict(model, newx = x.test)
+      p <- prediction(pred, cv_test_data$Purchase)
       ## Compute auc
-      auc <- performance(prediction(as.numeric(pred), 
-                                      as.numeric(y.test)),
-                    measure="auc", fpr.stop = .2)
+      auc <- performance(p, measure="auc", fpr.stop = .2)
       auc <- auc@y.values[[1]]
       auc_table[i, 1] <- auc
+      # plot(performance(p, measure = 'tpr', x.measure = 'fpr'))
     }
     glmnet_table[nrow(glmnet_table)+1, 1] <- alphas[iii]
     glmnet_table[nrow(glmnet_table), 2] <- grid[ii] 
     glmnet_table[nrow(glmnet_table), 3] <- mean(auc_table$auc)
     glmnet_table[nrow(glmnet_table), 4] <- sd(auc_table$auc)
-    glmnet_table[nrow(glmnet_table), 5] <- ifelse(length(unique(auc_table$auc)) == 1, NA, t.test(auc_table$auc)$"conf.int"[1])
-    glmnet_table[nrow(glmnet_table), 6]<- ifelse(length(unique(auc_table$auc)) == 1, NA, t.test(auc_table$auc)$"conf.int"[2])
+    glmnet_table[nrow(glmnet_table), 5] <- ifelse(length(unique(auc_table$auc)) == 1,
+                                                  NA, t.test(auc_table$auc)$"conf.int"[1])
+    glmnet_table[nrow(glmnet_table), 6]<- ifelse(length(unique(auc_table$auc)) == 1,
+                                                 NA, t.test(auc_table$auc)$"conf.int"[2])
   }
 }
 ## Plot
@@ -339,8 +370,9 @@ glmnet_table %>%
   geom_point(aes(y = low_CI), color = "red")+
   facet_wrap(. ~ alpha)+
   geom_pointrange(aes(ymin = mean_auc - sd, ymax = mean_auc + sd))+
-  ylim(0, .05)+
-  theme_bw()
+  # ylim(0, .05)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ggsave("data/cv_lr.png")
 ```
 

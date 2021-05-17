@@ -196,7 +196,7 @@
 \makeatother
 \subtitle{Homework 2}
 \author{François Leroy, PhD student at CZU}
-\date{2021-05-12}
+\date{2021-05-17}
 
 % to include pdf
 \usepackage{pdfpages}
@@ -491,7 +491,7 @@ We can clearly see a relationship between these two features which are MOSHOOFD 
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics[width=29.17in]{data/cv_dt}
+\includegraphics[width=30.15in]{data/cv_dt}
 
 The graphique above shows the mean AUC as a function of different values of cp.~The black lines represent the standard deviation and the red dots the Confidence Intervals. As we can see on this plot, reducing the complexity parameter below \(cp = 0.001\) doesn't change the mean \(AUC_{0.2}\). This means that \(cp = 0.001\) is already sufficiently low. As a low cp means a more complex model, we are looking for the highest value of cp maximizing the mean AUC. Thus, we can select \(cp = 0.001\) to learn the decision tree.
 
@@ -500,7 +500,7 @@ However, as we can see, the mean AUC is always equal to 0.027, which is rather d
 \hypertarget{random-forest}{%
 \section{Random Forest}\label{random-forest}}
 
-\includegraphics[width=24.74in]{data/cv_rf}
+\includegraphics[width=29.17in]{data/cv_rf}
 
 This plot shows the mean auc as a function of the number of trees. Each square correspond to a value of mtry indicated in the grey square. As we can see, the highest value of \(AUC_{0.2}\) is for \(mtry = 72\) and \(ntree = 10\).
 
@@ -509,7 +509,7 @@ However, we must keep in mind that the Confidence Intervals always overlap, whic
 \hypertarget{regularized-logistic-regression}{%
 \section{Regularized logistic regression}\label{regularized-logistic-regression}}
 
-\includegraphics[width=29.17in]{data/cv_lr}
+\includegraphics[width=30.38in]{data/cv_lr}
 
 
 \singlespacing % reset the spacing of the bibliography style
