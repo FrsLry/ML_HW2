@@ -196,7 +196,7 @@
 \makeatother
 \subtitle{Homework 2}
 \author{François Leroy, PhD student at CZU}
-\date{2021-05-17}
+\date{2021-05-18}
 
 % to include pdf
 \usepackage{pdfpages}
@@ -457,9 +457,6 @@ We can clearly see a relationship between these two features which are MOSHOOFD 
 \hypertarget{task-2---model-fitting-optimization-and-selection}{%
 \chapter{Task 2 - Model fitting, optimization, and selection}\label{task-2---model-fitting-optimization-and-selection}}
 
-\hypertarget{decision-tree}{%
-\section{Decision tree}\label{decision-tree}}
-
 \begin{Shaded}
 \begin{Highlighting}[]
 \CommentTok{## Function to randomly extract the test dataset in d_train }
@@ -491,6 +488,9 @@ We can clearly see a relationship between these two features which are MOSHOOFD 
 \end{Highlighting}
 \end{Shaded}
 
+\hypertarget{decision-tree}{%
+\section{Decision tree}\label{decision-tree}}
+
 \includegraphics[width=30.15in]{data/cv_dt}
 
 The graphique above shows the mean AUC as a function of different values of cp.~The black lines represent the standard deviation and the red dots the Confidence Intervals. As we can see on this plot, reducing the complexity parameter below \(cp = 0.001\) doesn't change the mean \(AUC_{0.2}\). This means that \(cp = 0.001\) is already sufficiently low. As a low cp means a more complex model, we are looking for the highest value of cp maximizing the mean AUC. Thus, we can select \(cp = 0.001\) to learn the decision tree.
@@ -500,7 +500,7 @@ However, as we can see, the mean AUC is always equal to 0.027, which is rather d
 \hypertarget{random-forest}{%
 \section{Random Forest}\label{random-forest}}
 
-\includegraphics[width=29.17in]{data/cv_rf}
+\includegraphics[width=30.03in]{data/cv_rf}
 
 This plot shows the mean auc as a function of the number of trees. Each square correspond to a value of mtry indicated in the grey square. As we can see, the highest value of \(AUC_{0.2}\) is for \(mtry = 72\) and \(ntree = 10\).
 
@@ -509,7 +509,74 @@ However, we must keep in mind that the Confidence Intervals always overlap, whic
 \hypertarget{regularized-logistic-regression}{%
 \section{Regularized logistic regression}\label{regularized-logistic-regression}}
 
-\includegraphics[width=30.38in]{data/cv_lr}
+\includegraphics[width=29.17in]{data/cv_lr}
+
+\hypertarget{evaluation-on-the-test-dataset}{%
+\section{Evaluation on the test dataset}\label{evaluation-on-the-test-dataset}}
+
+Thanks to the previous steps, we have chosen:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  A decision tree with \(cp = 0.00067\)
+\item
+  A random forest with \(ntree = 120\) and \(mtry = 19\)
+\item
+  A regularized logistic regression with \(\lambda = 0.01\) and \(\alpha = 0.25\)
+\end{enumerate}
+
+\includegraphics[width=1.5\linewidth]{leroy_francois_hw2_files/figure-latex/unnamed-chunk-17-1}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{l|r}
+\hline
+model & auc\\
+\hline
+Decision Tree & 0.060\\
+\hline
+Random Forest & 0.055\\
+\hline
+Regularized Logistic Regression & 0.062\\
+\hline
+\end{tabular}
+\end{table}
+
+\hypertarget{setting-cutoff-threshold}{%
+\section{Setting cutoff threshold}\label{setting-cutoff-threshold}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{## regularized logistic regression}
+\NormalTok{perf.acc.log <-}\StringTok{ }\KeywordTok{performance}\NormalTok{(p, }\DataTypeTok{measure =} \StringTok{"acc"}\NormalTok{, )}
+\NormalTok{perf.tpr.log <-}\StringTok{ }\KeywordTok{performance}\NormalTok{(p, }\DataTypeTok{measure =} \StringTok{"tpr"}\NormalTok{)}
+\NormalTok{perf.fpr.log <-}\StringTok{ }\KeywordTok{performance}\NormalTok{(p, }\DataTypeTok{measure =} \StringTok{"fpr"}\NormalTok{)}
+
+\KeywordTok{rbind}\NormalTok{(}\KeywordTok{cbind}\NormalTok{(}\DataTypeTok{x =} \KeywordTok{unlist}\NormalTok{(perf.acc.log}\OperatorTok{@}\NormalTok{x.values), }
+      \DataTypeTok{y =} \KeywordTok{unlist}\NormalTok{(perf.acc.log}\OperatorTok{@}\NormalTok{y.values), }\DataTypeTok{metric =} \StringTok{"acc"}\NormalTok{),}
+\KeywordTok{cbind}\NormalTok{(}\DataTypeTok{x =} \KeywordTok{unlist}\NormalTok{(perf.tpr.log}\OperatorTok{@}\NormalTok{x.values), }
+      \DataTypeTok{y =} \KeywordTok{unlist}\NormalTok{(perf.tpr.log}\OperatorTok{@}\NormalTok{y.values), }\DataTypeTok{metric =} \StringTok{"tpr"}\NormalTok{),}
+\KeywordTok{cbind}\NormalTok{(}\DataTypeTok{x =} \KeywordTok{unlist}\NormalTok{(perf.fpr.log}\OperatorTok{@}\NormalTok{x.values), }
+      \DataTypeTok{y =} \KeywordTok{unlist}\NormalTok{(perf.fpr.log}\OperatorTok{@}\NormalTok{y.values), }\DataTypeTok{metric =} \StringTok{"fpr"}\NormalTok{)) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{as_tibble}\NormalTok{() }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{x =} \KeywordTok{as.numeric}\NormalTok{(x), }\DataTypeTok{y =} \KeywordTok{as.numeric}\NormalTok{(y)) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(x, y, }\DataTypeTok{color =}\NormalTok{ metric)) }\OperatorTok{+}\StringTok{ }\KeywordTok{geom_line}\NormalTok{(}\DataTypeTok{size =} \DecValTok{1}\NormalTok{)}\OperatorTok{+}\KeywordTok{theme_bw}\NormalTok{()}\OperatorTok{+}
+\StringTok{  }\KeywordTok{xlab}\NormalTok{(}\StringTok{"Cut-off"}\NormalTok{)}\OperatorTok{+}\StringTok{ }\KeywordTok{ylab}\NormalTok{(}\StringTok{"Accuracy / FPR / TPR"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{leroy_francois_hw2_files/figure-latex/unnamed-chunk-19-1.pdf}
+
+The optimal cut-oof seems to be \(0.15\) \textbf{1)} because we can see that this is the value where the accuracy is reaching a threshold and \textbf{2)} because this is where the difference between the True Positive Rate and the False Positive Rate is the greatest. This second remark is important because here, we are looking for maximizing the number of true positive while minimizing the number of False Positive.
+
+Now, we can compute the confusion matrix with a threshold of \(0.15\):
+
+\begin{verbatim}
+##     obs
+## pred   0   1
+##    0 897  53
+##    1  37  13
+\end{verbatim}
 
 
 \singlespacing % reset the spacing of the bibliography style
