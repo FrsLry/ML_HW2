@@ -546,28 +546,9 @@ Regularized Logistic Regression & 0.062\\
 \hypertarget{setting-cutoff-threshold}{%
 \section{Setting cutoff threshold}\label{setting-cutoff-threshold}}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{## regularized logistic regression}
-\NormalTok{perf.acc.log <-}\StringTok{ }\KeywordTok{performance}\NormalTok{(p, }\DataTypeTok{measure =} \StringTok{"acc"}\NormalTok{, )}
-\NormalTok{perf.tpr.log <-}\StringTok{ }\KeywordTok{performance}\NormalTok{(p, }\DataTypeTok{measure =} \StringTok{"tpr"}\NormalTok{)}
-\NormalTok{perf.fpr.log <-}\StringTok{ }\KeywordTok{performance}\NormalTok{(p, }\DataTypeTok{measure =} \StringTok{"fpr"}\NormalTok{)}
-
-\KeywordTok{rbind}\NormalTok{(}\KeywordTok{cbind}\NormalTok{(}\DataTypeTok{x =} \KeywordTok{unlist}\NormalTok{(perf.acc.log}\OperatorTok{@}\NormalTok{x.values), }
-      \DataTypeTok{y =} \KeywordTok{unlist}\NormalTok{(perf.acc.log}\OperatorTok{@}\NormalTok{y.values), }\DataTypeTok{metric =} \StringTok{"acc"}\NormalTok{),}
-\KeywordTok{cbind}\NormalTok{(}\DataTypeTok{x =} \KeywordTok{unlist}\NormalTok{(perf.tpr.log}\OperatorTok{@}\NormalTok{x.values), }
-      \DataTypeTok{y =} \KeywordTok{unlist}\NormalTok{(perf.tpr.log}\OperatorTok{@}\NormalTok{y.values), }\DataTypeTok{metric =} \StringTok{"tpr"}\NormalTok{),}
-\KeywordTok{cbind}\NormalTok{(}\DataTypeTok{x =} \KeywordTok{unlist}\NormalTok{(perf.fpr.log}\OperatorTok{@}\NormalTok{x.values), }
-      \DataTypeTok{y =} \KeywordTok{unlist}\NormalTok{(perf.fpr.log}\OperatorTok{@}\NormalTok{y.values), }\DataTypeTok{metric =} \StringTok{"fpr"}\NormalTok{)) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{as_tibble}\NormalTok{() }\OperatorTok{%>%}\StringTok{ }
-\StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{x =} \KeywordTok{as.numeric}\NormalTok{(x), }\DataTypeTok{y =} \KeywordTok{as.numeric}\NormalTok{(y)) }\OperatorTok{%>%}\StringTok{ }
-\StringTok{  }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(x, y, }\DataTypeTok{color =}\NormalTok{ metric)) }\OperatorTok{+}\StringTok{ }\KeywordTok{geom_line}\NormalTok{(}\DataTypeTok{size =} \DecValTok{1}\NormalTok{)}\OperatorTok{+}\KeywordTok{theme_bw}\NormalTok{()}\OperatorTok{+}
-\StringTok{  }\KeywordTok{xlab}\NormalTok{(}\StringTok{"Cut-off"}\NormalTok{)}\OperatorTok{+}\StringTok{ }\KeywordTok{ylab}\NormalTok{(}\StringTok{"Accuracy / FPR / TPR"}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
 \includegraphics{leroy_francois_hw2_files/figure-latex/unnamed-chunk-19-1.pdf}
 
-The optimal cut-oof seems to be \(0.15\) \textbf{1)} because we can see that this is the value where the accuracy is reaching a threshold and \textbf{2)} because this is where the difference between the True Positive Rate and the False Positive Rate is the greatest. This second remark is important because here, we are looking for maximizing the number of true positive while minimizing the number of False Positive.
+The optimal cut-off seems to be \(0.15\) \textbf{1)} because we can see that this is the value where the accuracy is reaching a threshold and \textbf{2)} because this is where the difference between the True Positive Rate and the False Positive Rate is the greatest. This second remark is important because here, we are looking for maximizing the number of true positive while minimizing the number of False Positive.
 
 Now, we can compute the confusion matrix with a threshold of \(0.15\):
 
@@ -577,6 +558,202 @@ Now, we can compute the confusion matrix with a threshold of \(0.15\):
 ##    0 897  53
 ##    1  37  13
 \end{verbatim}
+
+\hypertarget{task-3---model-interpretation-and-feature-selection}{%
+\chapter{Task 3 - Model interpretation and feature selection}\label{task-3---model-interpretation-and-feature-selection}}
+
+\begin{table}[H]
+
+\centering
+\fontsize{9}{11}\selectfont
+\begin{tabular}[t]{l|r}
+\hline
+feature & MeanDecreaseGini\\
+\hline
+PBRAND & 20.09\\
+\hline
+MOSTYPE & 17.20\\
+\hline
+PPERSAUT & 16.73\\
+\hline
+APERSAUT & 14.74\\
+\hline
+MKOOPKLA & 11.94\\
+\hline
+PWAPART & 11.54\\
+\hline
+MGODGE & 11.08\\
+\hline
+MBERMIDD & 11.03\\
+\hline
+MGODPR & 10.97\\
+\hline
+MOPLMIDD & 10.90\\
+\hline
+MOSHOOFD & 10.27\\
+\hline
+MBERARBG & 10.12\\
+\hline
+MINK3045 & 9.88\\
+\hline
+MOPLLAAG & 9.86\\
+\hline
+MFGEKIND & 9.49\\
+\hline
+MFWEKIND & 9.46\\
+\hline
+MOPLHOOG & 9.39\\
+\hline
+MBERARBO & 9.11\\
+\hline
+MHHUUR & 8.98\\
+\hline
+MINK4575 & 8.82\\
+\hline
+MSKB1 & 8.74\\
+\hline
+MBERHOOG & 8.71\\
+\hline
+MSKC & 8.31\\
+\hline
+MHKOOP & 8.27\\
+\hline
+MINKGEM & 7.92\\
+\hline
+ABRAND & 7.72\\
+\hline
+MSKB2 & 7.66\\
+\hline
+AWAPART & 7.65\\
+\hline
+\end{tabular}
+\centering
+\begin{tabular}[t]{l|r}
+\hline
+feature & MeanDecreaseGini\\
+\hline
+MINKM30 & 7.55\\
+\hline
+MSKA & 7.47\\
+\hline
+MINK7512 & 7.41\\
+\hline
+MZFONDS & 7.40\\
+\hline
+MGODOV & 7.33\\
+\hline
+MFALLEEN & 7.29\\
+\hline
+MRELGE & 7.20\\
+\hline
+MAUT1 & 6.95\\
+\hline
+MZPART & 6.82\\
+\hline
+MRELOV & 6.26\\
+\hline
+MAUT0 & 6.18\\
+\hline
+MAUT2 & 5.99\\
+\hline
+MGEMLEEF & 5.83\\
+\hline
+ALEVEN & 5.55\\
+\hline
+MSKD & 5.39\\
+\hline
+PLEVEN & 5.07\\
+\hline
+MGEMOMV & 4.77\\
+\hline
+MGODRK & 4.72\\
+\hline
+AFIETS & 4.71\\
+\hline
+MRELSA & 4.61\\
+\hline
+MBERZELF & 4.37\\
+\hline
+PBYSTAND & 3.99\\
+\hline
+ABYSTAND & 3.73\\
+\hline
+PPLEZIER & 3.70\\
+\hline
+APLEZIER & 3.53\\
+\hline
+MBERBOER & 3.38\\
+\hline
+PMOTSCO & 3.24\\
+\hline
+MINK123M & 2.76\\
+\hline
+\end{tabular}
+\centering
+\begin{tabular}[t]{l|r}
+\hline
+feature & MeanDecreaseGini\\
+\hline
+AMOTSCO & 2.73\\
+\hline
+PBROM & 2.70\\
+\hline
+PFIETS & 2.62\\
+\hline
+ABROM & 2.44\\
+\hline
+MAANTHUI & 2.43\\
+\hline
+PWAOREG & 2.36\\
+\hline
+PGEZONG & 1.65\\
+\hline
+AWAOREG & 1.59\\
+\hline
+PTRACTOR & 1.20\\
+\hline
+PINBOED & 1.15\\
+\hline
+AGEZONG & 1.11\\
+\hline
+AINBOED & 1.02\\
+\hline
+PAANHANG & 0.97\\
+\hline
+PWABEDR & 0.88\\
+\hline
+ATRACTOR & 0.78\\
+\hline
+AWABEDR & 0.73\\
+\hline
+AAANHANG & 0.69\\
+\hline
+PBESAUT & 0.49\\
+\hline
+ABESAUT & 0.47\\
+\hline
+AZEILPL & 0.27\\
+\hline
+APERSONG & 0.25\\
+\hline
+PZEILPL & 0.22\\
+\hline
+AWALAND & 0.19\\
+\hline
+PPERSONG & 0.17\\
+\hline
+PWALAND & 0.15\\
+\hline
+PWERKT & 0.04\\
+\hline
+PVRAAUT & 0.01\\
+\hline
+AWERKT & 0.01\\
+\hline
+AVRAAUT & 0.00\\
+\hline
+\end{tabular}
+\end{table}
 
 
 \singlespacing % reset the spacing of the bibliography style

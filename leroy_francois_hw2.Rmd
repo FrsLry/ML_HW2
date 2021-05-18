@@ -463,9 +463,23 @@ cbind(x = unlist(perf.fpr.log@x.values),
   xlab("Cut-off")+ ylab("Accuracy / FPR / TPR")
 ```
 
-The optimal cut-oof seems to be $0.15$ **1)** because we can see that this is the value where the accuracy is reaching a threshold and **2)** because this is where the difference between the True Positive Rate and the False Positive Rate is the greatest. This second remark is important because here, we are looking for maximizing the number of true positive while minimizing the number of False Positive. 
+The optimal cut-off seems to be $0.15$ **1)** because we can see that this is the value where the accuracy is reaching a threshold and **2)** because this is where the difference between the True Positive Rate and the False Positive Rate is the greatest. This second remark is important because here, we are looking for maximizing the number of true positive while minimizing the number of False Positive. 
 
 Now, we can compute the confusion matrix with a threshold of $0.15$:
 ```{r, echo=F}
 table(pred = ifelse(pred < .15, 0, 1), obs = d_test$Purchase)
 ```
+
+# Task 3 - Model interpretation and feature selection
+
+```{r, echo=F}
+table2 <- importance(opti_RF) %>% as.data.frame() %>% arrange(desc(MeanDecreaseGini)) %>% rownames_to_column(var = "feature") %>% mutate(MeanDecreaseGini = round(MeanDecreaseGini, 2))
+## Display in 2 columns
+kableExtra::kable(list(table2[1:round((nrow(table2)/3)),], 
+                       table2[round(((nrow(table2)/3)+1)):floor(2*nrow(table2)/3),],
+                       table2[floor(((2*nrow(table2)/3)+1)):round(nrow(table2)),]),
+                  row.names = F) %>% 
+  kableExtra::kable_styling(latex_options = "HOLD_position", font_size = 9)
+```
+
+
