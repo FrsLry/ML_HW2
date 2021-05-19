@@ -196,7 +196,7 @@
 \makeatother
 \subtitle{Homework 2}
 \author{François Leroy, PhD student at CZU}
-\date{2021-05-18}
+\date{2021-05-19}
 
 % to include pdf
 \usepackage{pdfpages}
@@ -509,7 +509,7 @@ However, we must keep in mind that the Confidence Intervals always overlap, whic
 \hypertarget{regularized-logistic-regression}{%
 \section{Regularized logistic regression}\label{regularized-logistic-regression}}
 
-\includegraphics[width=29.17in]{data/cv_lr}
+\includegraphics[width=30.38in]{data/cv_lr}
 
 \hypertarget{evaluation-on-the-test-dataset}{%
 \section{Evaluation on the test dataset}\label{evaluation-on-the-test-dataset}}
@@ -523,7 +523,7 @@ Thanks to the previous steps, we have chosen:
 \item
   A random forest with \(ntree = 120\) and \(mtry = 19\)
 \item
-  A regularized logistic regression with \(\lambda = 0.01\) and \(\alpha = 0.25\)
+  A regularized logistic regression with \(\lambda = 0.01\) and \(\alpha = 0.75\)
 \end{enumerate}
 
 \includegraphics[width=1.5\linewidth]{leroy_francois_hw2_files/figure-latex/unnamed-chunk-17-1}
@@ -538,7 +538,7 @@ Decision Tree & 0.060\\
 \hline
 Random Forest & 0.055\\
 \hline
-Regularized Logistic Regression & 0.062\\
+Regularized Logistic Regression & 0.057\\
 \hline
 \end{tabular}
 \end{table}
@@ -555,14 +555,144 @@ Now, we can compute the confusion matrix with a threshold of \(0.15\):
 \begin{verbatim}
 ##     obs
 ## pred   0   1
-##    0 897  53
-##    1  37  13
+##    0 934  66
 \end{verbatim}
 
 \hypertarget{task-3---model-interpretation-and-feature-selection}{%
 \chapter{Task 3 - Model interpretation and feature selection}\label{task-3---model-interpretation-and-feature-selection}}
 
 \begin{table}[H]
+\caption{\label{tab:unnamed-chunk-21}Variable importance for the decision tree}
+
+\centering
+\fontsize{9}{11}\selectfont
+\begin{tabular}[t]{l|r}
+\hline
+feature & MeanDecreaseGini\\
+\hline
+PPERSAUT & 16.39\\
+\hline
+PBRAND & 12.61\\
+\hline
+APERSAUT & 12.06\\
+\hline
+MKOOPKLA & 10.73\\
+\hline
+PWAPART & 9.52\\
+\hline
+MOSTYPE & 9.41\\
+\hline
+MFGEKIND & 9.25\\
+\hline
+MBERHOOG & 8.81\\
+\hline
+AWAPART & 8.71\\
+\hline
+MOSHOOFD & 7.16\\
+\hline
+MOPLMIDD & 6.77\\
+\hline
+MOPLLAAG & 6.68\\
+\hline
+MRELGE & 6.64\\
+\hline
+ABRAND & 6.16\\
+\hline
+MFWEKIND & 5.93\\
+\hline
+MINK4575 & 5.69\\
+\hline
+MGODGE & 5.58\\
+\hline
+MRELOV & 5.25\\
+\hline
+MZPART & 4.99\\
+\hline
+MOPLHOOG & 4.83\\
+\hline
+MZFONDS & 4.68\\
+\hline
+MBERARBG & 4.66\\
+\hline
+MSKA & 4.65\\
+\hline
+MGEMLEEF & 4.55\\
+\hline
+MHHUUR & 4.53\\
+\hline
+MSKB1 & 4.24\\
+\hline
+MINK3045 & 4.14\\
+\hline
+MGEMOMV & 3.85\\
+\hline
+\end{tabular}
+\centering
+\begin{tabular}[t]{l|r}
+\hline
+feature & MeanDecreaseGini\\
+\hline
+MBERMIDD & 3.81\\
+\hline
+MGODPR & 3.63\\
+\hline
+MINKGEM & 3.53\\
+\hline
+APLEZIER & 3.19\\
+\hline
+PPLEZIER & 3.19\\
+\hline
+MHKOOP & 3.14\\
+\hline
+MSKD & 3.12\\
+\hline
+MFALLEEN & 3.03\\
+\hline
+MSKC & 2.90\\
+\hline
+MGODOV & 2.85\\
+\hline
+MAUT0 & 2.73\\
+\hline
+MSKB2 & 2.63\\
+\hline
+MBERARBO & 2.52\\
+\hline
+MINK7512 & 2.35\\
+\hline
+MAUT1 & 2.10\\
+\hline
+MINKM30 & 1.83\\
+\hline
+MAUT2 & 1.77\\
+\hline
+MRELSA & 1.13\\
+\hline
+MAANTHUI & 0.83\\
+\hline
+MBERZELF & 0.79\\
+\hline
+MGODRK & 0.78\\
+\hline
+ALEVEN & 0.70\\
+\hline
+PLEVEN & 0.70\\
+\hline
+AWALAND & 0.34\\
+\hline
+PWALAND & 0.34\\
+\hline
+ABYSTAND & 0.31\\
+\hline
+PBYSTAND & 0.31\\
+\hline
+PTRACTOR & 0.30\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\caption{\label{tab:unnamed-chunk-22}Variable importance for the random forest}
 
 \centering
 \fontsize{9}{11}\selectfont
@@ -751,6 +881,84 @@ PVRAAUT & 0.01\\
 AWERKT & 0.01\\
 \hline
 AVRAAUT & 0.00\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\caption{\label{tab:unnamed-chunk-23}Variable importance for the lasso regression}
+
+\centering
+\fontsize{9}{11}\selectfont
+\begin{tabular}[t]{l|r}
+\hline
+feature & s0\\
+\hline
+APLEZIER & 1.2945711\\
+\hline
+AZEILPL & 1.1414119\\
+\hline
+ABYSTAND & 0.7523564\\
+\hline
+AFIETS & 0.4165938\\
+\hline
+PWAOREG & 0.2678450\\
+\hline
+PPERSAUT & 0.2038757\\
+\hline
+MBERBOER & -0.1672857\\
+\hline
+PWAPART & 0.1551758\\
+\hline
+MINK123M & -0.1506243\\
+\hline
+PWALAND & -0.1470406\\
+\hline
+ATRACTOR & -0.1432662\\
+\hline
+PBRAND & 0.1026457\\
+\hline
+MINKGEM & 0.0765117\\
+\hline
+MRELGE & 0.0675735\\
+\hline
+MOPLLAAG & -0.0633978\\
+\hline
+\end{tabular}
+\centering
+\begin{tabular}[t]{l|r}
+\hline
+feature & s0\\
+\hline
+PWABEDR & -0.0584269\\
+\hline
+MOPLHOOG & 0.0515774\\
+\hline
+MGODRK & -0.0435352\\
+\hline
+MAUT1 & 0.0356634\\
+\hline
+MHHUUR & -0.0344877\\
+\hline
+MBERMIDD & 0.0309560\\
+\hline
+PGEZONG & 0.0288318\\
+\hline
+MGEMLEEF & 0.0271291\\
+\hline
+PWERKT & -0.0263719\\
+\hline
+MGODGE & -0.0245771\\
+\hline
+PBESAUT & -0.0218699\\
+\hline
+MKOOPKLA & 0.0191547\\
+\hline
+MRELSA & -0.0169228\\
+\hline
+MINK7512 & 0.0124976\\
+\hline
+MSKD & -0.0099615\\
 \hline
 \end{tabular}
 \end{table}

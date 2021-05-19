@@ -340,7 +340,7 @@ for(iii in 1:length(alphas)){
       x.test <- model.matrix(Purchase~., data = cv_test_data)
       y.test <- data.matrix(cv_test_data$Purchase)
       ## Learn the model
-      model <- glmnet(x, y, alpha = alphas[iii], family = "gaussian", lambda = grid[ii])
+      model <- glmnet(x, y, alpha = alphas[iii], family = "binomial", lambda = grid[ii])
       ## Predict with the model
       pred <- predict(model, newx = x.test)
       p <- prediction(pred, cv_test_data$Purchase)
@@ -387,7 +387,7 @@ Thanks to the previous steps, we have chosen:
 
 2. A random forest with $ntree = 120$ and $mtry = 19$
 
-3. A regularized logistic regression with $\lambda = 0.01$ and $\alpha = 0.25$
+3. A regularized logistic regression with $\lambda = 0.01$ and $\alpha = 0.75$
 
 
 
@@ -431,7 +431,7 @@ y <- data.matrix(d_train$Purchase)
 x.test <- model.matrix(Purchase~., data = d_test)
 y.test <- data.matrix(d_test$Purchase)
 ## Learn the model
-opti_glm <- glmnet(x, y, alpha = 0.25, family = "gaussian", lambda = 0.01)
+opti_glm <- glmnet(x, y, alpha = 0.25, family = "binomial", lambda = 0.05)
 ## Predict with the model
 pred <- predict(opti_glm, newx = x.test)
 p <- prediction(pred, d_test$Purchase)
@@ -447,6 +447,7 @@ kableExtra::kable(final_comparison) %>% kableExtra::kable_styling(position = "ce
 ## Setting cutoff threshold
 
 ```{r, echo=F}
+set.seed(123)
 ## regularized logistic regression
 perf.acc.log <- performance(p, measure = "acc", )
 perf.tpr.log <- performance(p, measure = "tpr")
@@ -472,14 +473,43 @@ table(pred = ifelse(pred < .15, 0, 1), obs = d_test$Purchase)
 
 # Task 3 - Model interpretation and feature selection
 
+
+```{r, echo=F}
+table3 <- opti_DT[["variable.importance"]] %>% as.data.frame() %>% rename(., MeanDecreaseGini = .) %>% rownames_to_column(var = "feature") %>% as_tibble() %>% mutate(MeanDecreaseGini = round(MeanDecreaseGini, 2))
+## Display in 2 columns
+kableExtra::kable(list(table3[1:(nrow(table3)/2),], 
+                       table3[((nrow(table3)/2)+1):nrow(table3),]), row.names = F,
+                  caption = "Variable importance for the decision tree") %>% 
+  kableExtra::kable_styling(latex_options = "HOLD_position", font_size = 9)
+```
+
 ```{r, echo=F}
 table2 <- importance(opti_RF) %>% as.data.frame() %>% arrange(desc(MeanDecreaseGini)) %>% rownames_to_column(var = "feature") %>% mutate(MeanDecreaseGini = round(MeanDecreaseGini, 2))
 ## Display in 2 columns
 kableExtra::kable(list(table2[1:round((nrow(table2)/3)),], 
                        table2[round(((nrow(table2)/3)+1)):floor(2*nrow(table2)/3),],
                        table2[floor(((2*nrow(table2)/3)+1)):round(nrow(table2)),]),
-                  row.names = F) %>% 
+                  row.names = F, caption = "Variable importance for the random forest") %>% 
   kableExtra::kable_styling(latex_options = "HOLD_position", font_size = 9)
 ```
 
+
+```{r, echo=F}
+# 100 different lambda values
+grid <- 10^seq(-1, -8, length = 10)
+## Learn the lasso regression
+lasso <- cv.glmnet(x, y, alpha = 1, family = "binomial", lambda = grid, type.measure = "mse")
+## Use lambda from the cross validation
+optimized_lasso <- glmnet(x, y, alpha =  1, family = "binomial", lambda = lasso$lambda.min)
+table4 <-
+  as.data.frame(as.matrix(coef(optimized_lasso))) %>%
+  rownames_to_column(var = "feature") %>%
+  as_tibble() %>% arrange(desc(abs(s0)))
+table4 <- table4[2:31,]
+## Display in 2 column
+kableExtra::kable(list(table4[1:(nrow(table4)/2),], 
+                       table4[floor((nrow(table4)/2)+1):nrow(table4),]), row.names = F,
+                  caption = "Variable importance for the lasso regression") %>% 
+  kableExtra::kable_styling(latex_options = "HOLD_position", font_size = 9)
+```
 
