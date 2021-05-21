@@ -196,7 +196,7 @@
 \makeatother
 \subtitle{Homework 2}
 \author{François Leroy, PhD student at CZU}
-\date{2021-05-19}
+\date{2021-05-21}
 
 % to include pdf
 \usepackage{pdfpages}
@@ -509,7 +509,7 @@ However, we must keep in mind that the Confidence Intervals always overlap, whic
 \hypertarget{regularized-logistic-regression}{%
 \section{Regularized logistic regression}\label{regularized-logistic-regression}}
 
-\includegraphics[width=30.38in]{data/cv_lr}
+\includegraphics[width=29.17in]{data/cv_lr}
 
 \hypertarget{evaluation-on-the-test-dataset}{%
 \section{Evaluation on the test dataset}\label{evaluation-on-the-test-dataset}}
@@ -538,7 +538,7 @@ Decision Tree & 0.060\\
 \hline
 Random Forest & 0.055\\
 \hline
-Regularized Logistic Regression & 0.057\\
+Regularized Logistic Regression & 0.056\\
 \hline
 \end{tabular}
 \end{table}
@@ -548,14 +548,15 @@ Regularized Logistic Regression & 0.057\\
 
 \includegraphics{leroy_francois_hw2_files/figure-latex/unnamed-chunk-19-1.pdf}
 
-The optimal cut-off seems to be \(0.15\) \textbf{1)} because we can see that this is the value where the accuracy is reaching a threshold and \textbf{2)} because this is where the difference between the True Positive Rate and the False Positive Rate is the greatest. This second remark is important because here, we are looking for maximizing the number of true positive while minimizing the number of False Positive.
+The optimal cut-off seems to be \(0.2\) \textbf{1)} because we can see that this is the value where the accuracy is reaching a threshold and \textbf{2)} because this is where the difference between the True Positive Rate and the False Positive Rate is the greatest. This second remark is important because here, we are looking for maximizing the number of true positive while minimizing the number of False Positive.
 
-Now, we can compute the confusion matrix with a threshold of \(0.15\):
+Now, we can compute the confusion matrix with a threshold of \(0.2\):
 
 \begin{verbatim}
 ##     obs
 ## pred   0   1
-##    0 934  66
+##    0 894  54
+##    1  40  12
 \end{verbatim}
 
 \hypertarget{task-3---model-interpretation-and-feature-selection}{%
@@ -962,6 +963,11 @@ MSKD & -0.0099615\\
 \hline
 \end{tabular}
 \end{table}
+
+\hypertarget{task-4---final-prediction-on-the-blind-test-set}{%
+\chapter{Task 4 - Final prediction on the blind test set}\label{task-4---final-prediction-on-the-blind-test-set}}
+
+The final prediction is done using the Decision Tree with a complexity parameter of \(0.00067\) chosen because of its highest AUC.
 
 
 \singlespacing % reset the spacing of the bibliography style
