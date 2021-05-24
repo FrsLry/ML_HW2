@@ -196,7 +196,7 @@
 \makeatother
 \subtitle{Homework 2}
 \author{François Leroy, PhD student at CZU}
-\date{2021-05-21}
+\date{2021-05-24}
 
 % to include pdf
 \usepackage{pdfpages}
@@ -267,19 +267,9 @@
   \textbf{First, check the distribution of the target attribute. What would be your precision if you select 100 examples by chance?}
 \end{itemize}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{round}\NormalTok{(}\KeywordTok{table}\NormalTok{(Caravan}\OperatorTok{$}\NormalTok{Purchase), }\DecValTok{2}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## 
-##   No  Yes 
-## 5474  348
-\end{verbatim}
-
 \includegraphics{leroy_francois_hw2_files/figure-latex/unnamed-chunk-5-1.pdf}
+
+We can see that there is 94\% of customers who didn't purchase the insurance and that 6\% who did. From this, we can compute the following Probability Mass Function of this binomial distribution:
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -289,7 +279,7 @@
 
 \includegraphics{leroy_francois_hw2_files/figure-latex/unnamed-chunk-6-1.pdf}
 
-We can see that there is 94\% of customers who didn't purchase the insurance and that 6\% who did. As the precision is the number of examples classified as \emph{Yes} when the value is actually \emph{Yes}, by chance, the precision should be 0.06.
+The precision is the number of examples classified as \emph{Yes} when the value is actually \emph{Yes}. Here, the precision should be 0.06, which is actually the ratio between \enquote{Yes} and \enquote{No}.
 
 \begin{itemize}
 \tightlist
@@ -335,9 +325,9 @@ group & size & purchase\_prop\\
 \hline
 \end{tabular}
 
-From this first table, we can see that the customers that are more prone to purchase an insurance (13\% of them) are the one belonging to the group 2, \emph{i.e.} the \emph{driven growers}. On the other hand, the customers belonging to the class 6 and 10, respectively the \emph{cruising seniors} and the \emph{farmers}, are less likely to subscribe to the insurance (only 2\% in each group).
+This table shows the number of individuals (column \(size\)) and the proportion of customers that will buy an insurance in each group (column \(purchase\_prop\)) of the \emph{MOSHOOFD} variable. The \emph{MOSHOOFD} attribute correspond to the customer main type. We can see that the customers that are more prone to purchase an insurance are the one belonging to the group 2, \emph{i.e.} the \emph{driven growers} (13\% of them will buy an insurance). Then, the \emph{successful hedonist} are more likely to buy an insurance (\emph{group 1}, \(9\%\) of them). The names of these two groups suggest that they are rather wealthy individuals. On the other hand, the customers belonging to the class 6 and 10, respectively the \emph{cruising seniors} and the \emph{farmers}, are less likely to subscribe to the insurance (only 2\% in each group). This is also quite expected, as seniors and farmers can be in precarious situations.
 
-\underline{MOSHOOFD type:}
+\underline{MOSTYPE type:}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -436,19 +426,9 @@ group & size & purchase\_prop\\
 \end{tabular}
 \end{table}
 
-The two groups more prone to buy an insurance are the group 8 and 12, which correspond respectively to \emph{middle class families} and \emph{affluent young families}. Thus, we can say that families are potential good targets to sell insurances. We can see that the class 25, 26, 27 and 29 all have a low proportion of individuals buying a insurance. They are all related to old people (\emph{i.e.}, \emph{Young seniors in the city}, \emph{Own home elderly}, \emph{Seniors in apartments}, \emph{Porchless seniors: no front yard}). Thus, old people are not a good target to sell insurances.
+This table is the same than the previous one but for the \emph{MOSTYPE} variable, which gives more information about the social status. It is order by descending proportion of purchase. The two groups more prone to buy an insurance are the group 8 and 12, which correspond respectively to \emph{middle class families} and \emph{affluent young families}. Thus, we can say that families are potential good targets to sell insurances. We can see that the class 25, 26, 27 and 29 all have a low proportion of individuals buying a insurance. They are all related to old people (\emph{i.e.}, \emph{Young seniors in the city}, \emph{Own home elderly}, \emph{Seniors in apartments}, \emph{Porchless seniors: no front yard}). Thus, as said just above for the \emph{MOSHOOFD} variable, old people don't seem to be good targets to sell insurances. Moreover, the group 41, \emph{i.e.} the \emph{mixed rurals} are also less prone to subscribe an insurance, as expected with the \emph{MOSHOOFD} variable.
 
 \textbf{1.b. Analyze the relationship between features MOSHOOFD and MOSTYPE.}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{Caravan }\OperatorTok{%>%}\StringTok{ }
-\StringTok{  }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{y =}\NormalTok{ MOSTYPE, }\DataTypeTok{x =}\NormalTok{ MOSHOOFD))}\OperatorTok{+}
-\StringTok{  }\KeywordTok{geom_point}\NormalTok{()}\OperatorTok{+}
-\StringTok{  }\KeywordTok{geom_smooth}\NormalTok{(}\DataTypeTok{method =} \StringTok{"lm"}\NormalTok{)}\OperatorTok{+}
-\StringTok{  }\KeywordTok{theme_bw}\NormalTok{()}
-\end{Highlighting}
-\end{Shaded}
 
 \includegraphics{leroy_francois_hw2_files/figure-latex/unnamed-chunk-9-1.pdf}
 
@@ -493,23 +473,38 @@ We can clearly see a relationship between these two features which are MOSHOOFD 
 
 \includegraphics[width=30.15in]{data/cv_dt}
 
-The graphique above shows the mean AUC as a function of different values of cp.~The black lines represent the standard deviation and the red dots the Confidence Intervals. As we can see on this plot, reducing the complexity parameter below \(cp = 0.001\) doesn't change the mean \(AUC_{0.2}\). This means that \(cp = 0.001\) is already sufficiently low. As a low cp means a more complex model, we are looking for the highest value of cp maximizing the mean AUC. Thus, we can select \(cp = 0.001\) to learn the decision tree.
-
-However, as we can see, the mean AUC is always equal to 0.027, which is rather disappointing.
+The graphique above shows the mean AUC as a function of different values of cp.~The black lines represent the standard deviation and the red dots the Confidence Intervals (computed with the \texttt{t.test()} function and with \(\alpha = 5\%\)).
+As we can see the mean \(AUC_{0.2}\) stay stable for the six firsts values of \(cp\) and increase a bit for \(cp = 6.7\times10^{-3}\) and then stay stable with increasing \(cp\). reducing the complexity parameter below \(cp = 0.001\) doesn't change the mean \(AUC_{0.2}\). The \(cp\) parameter indicates the minimum change of the training error rate to consider the splitting process. As a low \(cp\) means a more complex model, we are looking for the highest value of cp maximizing the mean \(AUC_{0.2}\). We can see that \(cp = 0.001\) is already sufficiently low. Thus, we can select \(cp = 0.001\) to learn the decision tree.
 
 \hypertarget{random-forest}{%
 \section{Random Forest}\label{random-forest}}
 
 \includegraphics[width=30.03in]{data/cv_rf}
 
-This plot shows the mean auc as a function of the number of trees. Each square correspond to a value of mtry indicated in the grey square. As we can see, the highest value of \(AUC_{0.2}\) is for \(mtry = 72\) and \(ntree = 10\).
+This plot shows the mean auc as a function of the number of trees (\emph{i.e.} \(ntree\)). Each square correspond to a value of \(mtry\), \emph{i.e.} the number of features used in the splitting process. As we can see, the highest value of \(AUC_{0.2}\) is for \(mtry = 19\) and \(ntree = 120\).
 
-However, we must keep in mind that the Confidence Intervals always overlap, which means that the difference between the mean \(AUC_{0.2}\) are not significant.
+We know that the theoretical value of \(mtry\) for the classification task is \(\sqrt{number\:of\:feature}\). Here, it is equal to \(10\), which is quite close to the selected \(mtry = 19\).
 
 \hypertarget{regularized-logistic-regression}{%
 \section{Regularized logistic regression}\label{regularized-logistic-regression}}
 
 \includegraphics[width=29.17in]{data/cv_lr}
+
+This figure shows the mean \(AUC_{0.2}\) for different values of two hyperparameters of the elastic net regularization:
+
+\begin{itemize}
+\item
+  \(\alpha\): which is the weight given to the two types of penalties (L1 and L2, see \emph{Element of Statistical Learning}, Hastie \emph{et al.} 2001). \(\alpha = 1\) correspond to the lasso penalty (\emph{i.e.} the L1 penalty) and \(\alpha = 0\) correspont to the ridge regularization (\emph{i.e.} the L2 penalty).
+\item
+  \(\lambda\): which is the weighting of the penalties to the loss function. Thus, \(\lambda = 0\) means no weighting and is an unregularized logistic regression whilst \(\lambda = 1\) means a fully weighted penalty.
+\end{itemize}
+
+As we can see on this figures, the highest value of \(AUC_{0.2}\) seems to be for \(\alpha = 0.75\) and \(\lambda = 0.01\).
+
+\hypertarget{note-about-hyperparameters-selection}{%
+\section{Note about hyperparameters selection}\label{note-about-hyperparameters-selection}}
+
+As represented on the previous plots, most of the \(AUC_{0.2}\) confidence intervals overlap, which means that their differences are statistically non significant. However, a choice was necessary and I decided to always choose the hyperparameters giving the lowest \(AUC_{0.2}\) values.
 
 \hypertarget{evaluation-on-the-test-dataset}{%
 \section{Evaluation on the test dataset}\label{evaluation-on-the-test-dataset}}
@@ -519,12 +514,16 @@ Thanks to the previous steps, we have chosen:
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
 \item
-  A decision tree with \(cp = 0.00067\)
+  Decision tree with \(cp = 0.001\)
 \item
-  A random forest with \(ntree = 120\) and \(mtry = 19\)
+  Random forest with \(ntree = 120\) and \(mtry = 19\)
 \item
-  A regularized logistic regression with \(\lambda = 0.01\) and \(\alpha = 0.75\)
+  Regularized logistic regression with \(\lambda = 0.01\) and \(\alpha = 0.75\)
 \end{enumerate}
+
+Now, we can \textbf{1)} learn the model on the entire training dataset and \textbf{2)} compute the \(AUC_{0.2}\) when predicting on the test dataset.
+
+The following plots show the ROC curve (Receiver Operating Characteristic) of the three optimized models with their respective \(AUC_{0.2}\) displayed in the table.
 
 \includegraphics[width=1.5\linewidth]{leroy_francois_hw2_files/figure-latex/unnamed-chunk-17-1}
 
@@ -543,12 +542,16 @@ Regularized Logistic Regression & 0.056\\
 \end{tabular}
 \end{table}
 
+As we can see, the highest value of \(AUC_{0.2}\) is for the decision tree with \(cp = 0.001\). It is interesting to note the difference between the \(AUC_{0.2}\) computed on the test dataset and the one computed from the cross-validation. From the cross-validation, the highest value of \(AUC_{0.2}\) was for the regularized logistic regression, with \(AUC_{0.2}\approx0.07\) whilst for the decision tree it was slightly lower than \(0.065\). Now, we can see that \(AUC_{0.2}\) is higher for the decision tree. We can think that the decision tree is better at generalization than the regularized logistic regression, which was slightly overfitted.
+
 \hypertarget{setting-cutoff-threshold}{%
 \section{Setting cutoff threshold}\label{setting-cutoff-threshold}}
 
+The cut-off indicates the probability at which we should start to consider the prediction as True. The following plot shows the values of precision, accuracy, True Positive Rate (TPR) and False Positive Rate (FPR) according to different cut-off threshold. So far, all the learning processes have been done using the \(AUC_{0.2}\), which is the Area Under the Curve just up to \(FPR\leq20\%\). Thus, I decided not to consider cut-off higher than 0.2.
+
 \includegraphics{leroy_francois_hw2_files/figure-latex/unnamed-chunk-19-1.pdf}
 
-The optimal cut-off seems to be \(0.2\) \textbf{1)} because we can see that this is the value where the accuracy is reaching a threshold and \textbf{2)} because this is where the difference between the True Positive Rate and the False Positive Rate is the greatest. This second remark is important because here, we are looking for maximizing the number of true positive while minimizing the number of False Positive.
+First, we can see that the precision and accuracy start closely to what a random classifier would do, \emph{i.e.} close to \(0.06\). We can also observe that the maximum value of accuracy is very quickly reach: this is due to the fact that our dataset is really homogeneous, \emph{i.e.} we have a lot of \emph{No} for very little \emph{Yes}. Thus, the classifier will quickly correctly classify all the actual \emph{No} as \emph{No} for low values of the cut-off and the accuracy will be high. Here, we need to focus on the correctly classified \emph{Yes}, and for this we use the precision (\(P = \frac{TP}{TP+FP}\)). We can see that the highest value of precision is reached for \(cutoff = 0.2\).
 
 Now, we can compute the confusion matrix with a threshold of \(0.2\):
 
@@ -960,6 +963,8 @@ MRELSA & -0.0169228\\
 MINK7512 & 0.0124976\\
 \hline
 MSKD & -0.0099615\\
+\hline
+PLEVEN & -0.0020227\\
 \hline
 \end{tabular}
 \end{table}

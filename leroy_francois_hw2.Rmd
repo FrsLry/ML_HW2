@@ -53,7 +53,7 @@ d_train <- Caravan[-split,]
 
 * **First, check the distribution of the target attribute. What would be your precision if you select 100 examples by chance?**
 
-```{r}
+```{r, echo=F, eval=F}
 round(table(Caravan$Purchase), 2)
 ```
 
@@ -65,11 +65,15 @@ Caravan %>%
   theme_bw()
 ```
 
+
+
+We can see that there is `r paste0(round(table(Caravan$Purchase)/nrow(Caravan), 2)[1]*100, "%")` of customers who didn't purchase the insurance and that `r paste0(round(table(Caravan$Purchase)/nrow(Caravan), 2)[2]*100, "%")` who did. From this, we can compute the following Probability Mass Function of this binomial distribution: 
+
 ```{r}
 plot(dbinom(1:20, size = 100, prob = .06))
 ```
 
-We can see that there is `r paste0(round(table(Caravan$Purchase)/nrow(Caravan), 2)[1]*100, "%")` of customers who didn't purchase  the insurance and that `r paste0(round(table(Caravan$Purchase)/nrow(Caravan), 2)[2]*100, "%")` who did. As the precision is the number of examples classified as *Yes* when the value is actually *Yes*, by chance, the precision should be `r round(table(Caravan$Purchase)/nrow(Caravan), 2)[2]`.
+The precision is the number of examples classified as *Yes* when the value is actually *Yes*. Here, the precision should be `r round(table(Caravan$Purchase)/nrow(Caravan), 2)[2]`, which is actually the ratio between "Yes" and "No".
 
 * **1.a. Focus on the customer type MOSHOOFD: create a table with the number of customers that belong to each of 10 L2 groups and the percentage of customers that purchased a caravan insurance policy in each group. Comment the figures in the table. Then do the same for the customer subtype MOSTYPE (41 subgroups defined in L1).** 
 
@@ -86,9 +90,9 @@ Caravan %>%
   kableExtra::kable()
 ```
 
-From this first table, we can see that the customers that are more prone to purchase an insurance (13% of them) are the one belonging to the group 2, *i.e.* the *driven growers*. On the other hand, the customers belonging to the class 6 and 10, respectively the *cruising seniors* and the *farmers*, are less likely to subscribe to the insurance (only 2% in each group).
+This table shows the number of individuals (column $size$) and the proportion of customers that will buy an insurance in each group (column $purchase\_prop$) of the *MOSHOOFD* variable. The *MOSHOOFD* attribute correspond to the customer main type. We can see that the customers that are more prone to purchase an insurance are the one belonging to the group 2, *i.e.* the *driven growers* (13% of them will buy an insurance). Then, the *successful hedonist* are more likely to buy an insurance (*group 1*, $9\%$ of them). The names of these two groups suggest that they are rather wealthy individuals. On the other hand, the customers belonging to the class 6 and 10, respectively the *cruising seniors* and the *farmers*, are less likely to subscribe to the insurance (only 2% in each group). This is also quite expected, as seniors and farmers can be in precarious situations.
 
-\underline{MOSHOOFD type:}
+\underline{MOSTYPE type:}
 
 ```{r}
 table <- 
@@ -105,11 +109,11 @@ kableExtra::kable(list(table[1:(nrow(table)/2),],
   kableExtra::kable_styling(latex_options = "HOLD_position")
 ```
 
-The two groups more prone to buy an insurance are the group 8 and 12, which correspond respectively to *middle class families* and *affluent young families*. Thus, we can say that families are potential good targets to sell insurances. We can see that the class 25, 26, 27 and 29 all have a low proportion of individuals buying a insurance. They are all related to old people (*i.e.*, *Young seniors in the city*, *Own home elderly*, *Seniors in apartments*, *Porchless seniors: no front yard*). Thus, old people are not a good target to sell insurances. 
+This table is the same than the previous one but for the *MOSTYPE* variable, which gives more information about the social status. It is order by descending proportion of purchase. The two groups more prone to buy an insurance are the group 8 and 12, which correspond respectively to *middle class families* and *affluent young families*. Thus, we can say that families are potential good targets to sell insurances. We can see that the class 25, 26, 27 and 29 all have a low proportion of individuals buying a insurance. They are all related to old people (*i.e.*, *Young seniors in the city*, *Own home elderly*, *Seniors in apartments*, *Porchless seniors: no front yard*). Thus, as said just above for the *MOSHOOFD* variable, old people don't seem to be good targets to sell insurances. Moreover, the group 41, *i.e.* the *mixed rurals* are also less prone to subscribe an insurance, as expected with the *MOSHOOFD* variable.  
 
 **1.b. Analyze the relationship between features MOSHOOFD and MOSTYPE.**
 
-```{r}
+```{r, echo=F}
 Caravan %>% 
   ggplot(aes(y = MOSTYPE, x = MOSHOOFD))+
   geom_point()+
@@ -215,9 +219,8 @@ knitr::include_graphics("data/cv_dt.png")
 ```
 
 
-The graphique above shows the mean AUC as a function of different values of cp. The black lines represent the standard deviation and the red dots the Confidence Intervals. As we can see on this plot, reducing the complexity parameter below $cp = 0.001$ doesn't change the mean $AUC_{0.2}$. This means that $cp = 0.001$ is already sufficiently low. As a low cp means a more complex model, we are looking for the highest value of cp maximizing the mean AUC. Thus, we can select $cp = 0.001$ to learn the decision tree. 
-
-However, as we can see, the mean AUC is always equal to 0.027, which is rather disappointing.
+The graphique above shows the mean AUC as a function of different values of cp. The black lines represent the standard deviation and the red dots the Confidence Intervals (computed with the `t.test()` function and with $\alpha = 5\%$). 
+As we can see the mean $AUC_{0.2}$ stay stable for the six firsts values of $cp$ and increase a bit for $cp = 6.7\times10^{-3}$ and then stay stable with increasing $cp$. reducing the complexity parameter below $cp = 0.001$ doesn't change the mean $AUC_{0.2}$. The $cp$ parameter indicates the minimum change of the training error rate to consider the splitting process. As a low $cp$ means a more complex model, we are looking for the highest value of cp maximizing the mean $AUC_{0.2}$. We can see that $cp = 0.001$ is already sufficiently low. Thus, we can select $cp = 0.001$ to learn the decision tree. 
 
 
 ## Random Forest
@@ -296,9 +299,9 @@ knitr::include_graphics("data/cv_rf.png")
 ```
 
 
-This plot shows the mean auc as a function of the number of trees. Each square correspond to a value of mtry indicated in the grey square. As we can see, the highest value of $AUC_{0.2}$ is for $mtry = 72$ and $ntree = 10$.
+This plot shows the mean auc as a function of the number of trees (*i.e.* $ntree$). Each square correspond to a value of $mtry$, *i.e.* the number of features used in the splitting process. As we can see, the highest value of $AUC_{0.2}$ is for $mtry = 19$ and $ntree = 120$.
 
-However, we must keep in mind that the Confidence Intervals always overlap, which means that the difference between the mean $AUC_{0.2}$ are not significant. 
+We know that the theoretical value of $mtry$ for the classification task is $\sqrt{number\:of\:feature}$. Here, it is equal to $10$, which is quite close to the selected $mtry = 19$. 
 
 ## Regularized logistic regression
 
@@ -342,7 +345,7 @@ for(iii in 1:length(alphas)){
       ## Learn the model
       model <- glmnet(x, y, alpha = alphas[iii], family = "binomial", lambda = grid[ii])
       ## Predict with the model
-      pred <- predict(model, newx = x.test, type = "response")
+      pred <- predict(model, newx = x.test, type = "response", s = grid[ii])
       p <- prediction(pred, cv_test_data$Purchase)
       ## Compute auc
       auc <- performance(p, measure="auc", fpr.stop = .2)
@@ -379,17 +382,31 @@ ggsave("data/cv_lr.png")
 knitr::include_graphics("data/cv_lr.png")
 ```
 
+This figure shows the mean $AUC_{0.2}$ for different values of two hyperparameters of the elastic net regularization: 
+
+* $\alpha$: which is the weight given to the two types of penalties (L1 and L2, see *Element of Statistical Learning*, Hastie *et al.* 2001). $\alpha = 1$ correspond to the lasso penalty (*i.e.* the L1 penalty) and $\alpha = 0$ correspont to the ridge regularization (*i.e.* the L2 penalty).
+
+* $\lambda$: which is the weighting of the penalties to the loss function. Thus, $\lambda = 0$ means no weighting and is an unregularized logistic regression whilst $\lambda = 1$ means a fully weighted penalty.
+
+As we can see on this figures, the highest value of $AUC_{0.2}$ seems to be for $\alpha = 0.75$ and $\lambda = 0.01$. 
+
+## Note about hyperparameters selection
+
+As represented on the previous plots, most of the $AUC_{0.2}$ confidence intervals overlap, which means that their differences are statistically non significant. However, a choice was necessary and I decided to always choose the hyperparameters giving the lowest $AUC_{0.2}$ values.
+
 ## Evaluation on the test dataset
 
 Thanks to the previous steps, we have chosen:
 
-1. A decision tree with $cp = 0.00067$
+1. Decision tree with $cp = 0.001$
 
-2. A random forest with $ntree = 120$ and $mtry = 19$
+2. Random forest with $ntree = 120$ and $mtry = 19$
 
-3. A regularized logistic regression with $\lambda = 0.01$ and $\alpha = 0.75$
+3. Regularized logistic regression with $\lambda = 0.01$ and $\alpha = 0.75$
 
+Now, we can **1)** learn the model on the entire training dataset and **2)** compute the $AUC_{0.2}$ when predicting on the test dataset.
 
+The following plots show the ROC curve (Receiver Operating Characteristic) of the three optimized models with their respective $AUC_{0.2}$ displayed in the table. 
 
 ```{r, echo=F, fig.show="hold", out.width="150%"}
 par(mfrow = c(2, 2))
@@ -406,7 +423,7 @@ d_test <-
   mutate(Purchase = as.factor(Purchase))
   
 ## DT
-opti_DT <- rpart(Purchase ~ ., data = d_train, cp = 0.00067)
+opti_DT <- rpart(Purchase ~ ., data = d_train, cp = 0.001)
 pred <- predict(opti_DT, d_test %>% select(-Purchase), type = "prob")[,2]
 p <- prediction(pred, d_test$Purchase)
 final_comparison[1, 1] <- "Decision Tree"
@@ -433,7 +450,7 @@ y.test <- data.matrix(d_test$Purchase)
 ## Learn the model
 opti_glm <- glmnet(x, y, alpha = 0.75, family = "binomial", lambda = 0.01)
 ## Predict with the model
-pred <- predict(opti_glm, newx = x.test, type = "response")
+pred <- predict(opti_glm, newx = x.test, type = "response", s = 0.01)
 p <- prediction(pred, d_test$Purchase)
 final_comparison[3, 1] <- "Regularized Logistic Regression"
 final_comparison[3, 2] <- round(performance(p, measure="auc", fpr.stop = .2)@y.values[[1]], 3)
@@ -444,16 +461,20 @@ plot(performance(p, measure = 'tpr', x.measure = 'fpr'), main = "Regularized Log
 kableExtra::kable(final_comparison) %>% kableExtra::kable_styling(position = "center",latex_options = "HOLD_position")
 ```
 
+As we can see, the highest value of $AUC_{0.2}$ is for the decision tree with $cp = 0.001$. It is interesting to note the difference between the $AUC_{0.2}$ computed on the test dataset and the one computed from the cross-validation. From the cross-validation, the highest value of $AUC_{0.2}$ was for the regularized logistic regression, with $AUC_{0.2}\approx0.07$ whilst for the decision tree it was slightly lower than $0.065$. Now, we can see that $AUC_{0.2}$ is higher for the decision tree. We can think that the decision tree is better at generalization than the regularized logistic regression, which was slightly overfitted.  
+
 ## Setting cutoff threshold
+
+The cut-off indicates the probability at which we should start to consider the prediction as True. The following plot shows the values of precision, accuracy, True Positive Rate (TPR) and False Positive Rate (FPR) according to different cut-off threshold. So far, all the learning processes have been done using the $AUC_{0.2}$, which is the Area Under the Curve just up to $FPR\leq20\%$. Thus, I decided not to consider cut-off higher than 0.2. 
 
 ```{r, echo=F}
 set.seed(123)
 ## DT
-opti_DT <- rpart(Purchase ~ ., data = d_train, cp = 0.00067)
+opti_DT <- rpart(Purchase ~ ., data = d_train, cp = 0.001)
 pred <- predict(opti_DT, d_test %>% select(-Purchase), type = "prob")[,2]
 p <- prediction(pred, d_test$Purchase)
-perf.prec <- performance(p, measure = "prec", )
-perf.acc <- performance(p, measure = "acc", )
+perf.prec <- performance(p, measure = "prec")
+perf.acc <- performance(p, measure = "acc")
 perf.tpr <- performance(p, measure = "tpr")
 perf.fpr <- performance(p, measure = "fpr")
 
@@ -470,7 +491,7 @@ cbind(x = unlist(perf.fpr@x.values),
   xlab("Cut-off")+ ylab("Precision / Accuracy / FPR / TPR")+xlim(0, 0.2)
 ```
 
-The optimal cut-off seems to be $0.2$ **1)** because we can see that this is the value where the accuracy is reaching a threshold and **2)** because this is where the difference between the True Positive Rate and the False Positive Rate is the greatest. This second remark is important because here, we are looking for maximizing the number of true positive while minimizing the number of False Positive. 
+First, we can see that the precision and accuracy start closely to what a random classifier would do, *i.e.* close to $0.06$. We can also observe that the maximum value of accuracy is very quickly reach: this is due to the fact that our dataset is really homogeneous, *i.e.* we have a lot of *No* for very little *Yes*. Thus, the classifier will quickly correctly classify all the actual *No* as *No* for low values of the cut-off and the accuracy will be high. Here, we need to focus on the correctly classified *Yes*, and for this we use the precision ($P = \frac{TP}{TP+FP}$). We can see that the highest value of precision is reached for $cutoff = 0.2$. 
 
 Now, we can compute the confusion matrix with a threshold of $0.2$:
 ```{r, echo=F}
@@ -501,6 +522,7 @@ kableExtra::kable(list(table2[1:round((nrow(table2)/3)),],
 
 
 ```{r, echo=F}
+set.seed(123)
 # 100 different lambda values
 grid <- 10^seq(-1, -8, length = 10)
 ## Learn the lasso regression
@@ -511,7 +533,7 @@ table4 <-
   as.data.frame(as.matrix(coef(optimized_lasso))) %>%
   rownames_to_column(var = "feature") %>%
   as_tibble() %>% arrange(desc(abs(s0)))
-table4 <- table4[2:31,]
+table4 <- table4[2:32,]
 ## Display in 2 column
 kableExtra::kable(list(table4[1:(nrow(table4)/2),], 
                        table4[floor((nrow(table4)/2)+1):nrow(table4),]), row.names = F,
