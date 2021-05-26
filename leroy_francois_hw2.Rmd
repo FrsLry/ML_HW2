@@ -49,7 +49,7 @@ d_train <- Caravan[-split,]
 ```
 
 
-# Task 1 - Data analysis
+# Task 1 - Data analysis {#task1}
 
 * **First, check the distribution of the target attribute. What would be your precision if you select 100 examples by chance?**
 
@@ -501,7 +501,7 @@ table(pred = ifelse(pred < .2, 0, 1), obs = d_test$Purchase)
 # Task 3 - Model interpretation and feature selection
 
 
-```{r, echo=F}
+```{r DT, echo=F}
 table3 <- opti_DT[["variable.importance"]] %>% as.data.frame() %>% rename(., MeanDecreaseGini = .) %>% rownames_to_column(var = "feature") %>% as_tibble() %>% mutate(MeanDecreaseGini = round(MeanDecreaseGini, 2))
 ## Display in 2 columns
 kableExtra::kable(list(table3[1:(nrow(table3)/2),], 
@@ -510,7 +510,9 @@ kableExtra::kable(list(table3[1:(nrow(table3)/2),],
   kableExtra::kable_styling(latex_options = "HOLD_position", font_size = 9)
 ```
 
-```{r, echo=F}
+The previous table \@ref(tab:DT) shows the features ordered by decreasing value of the mean decrease of the Gini index for the deicision tree. The Gini index is an index of purity. Low values of Gini indicate a purer leaf node. Thus, a higher decrease in the Gini index means a feature which is more prone to classify correctly.  
+
+```{r RF, echo=F}
 table2 <- importance(opti_RF) %>% as.data.frame() %>% arrange(desc(MeanDecreaseGini)) %>% rownames_to_column(var = "feature") %>% mutate(MeanDecreaseGini = round(MeanDecreaseGini, 2))
 ## Display in 2 columns
 kableExtra::kable(list(table2[1:round((nrow(table2)/3)),], 
@@ -520,8 +522,13 @@ kableExtra::kable(list(table2[1:round((nrow(table2)/3)),],
   kableExtra::kable_styling(latex_options = "HOLD_position", font_size = 9)
 ```
 
+The table \@ref(tab:RF) also shows the mean decrease of the Gini index for each feature for the random forest. 
 
-```{r, echo=F}
+**Feature analysis of the decision tree and the random forest:** we can observe from the decision tree (DT) and the random forest (RF) that the features *PBRAND*, *PPERSAUT*, *APERSAUT* and *PWAPART*, which correspond respectively to *contribution fire policies*, *contribution car policies*, *number of car policies* and *contribution private third party insurance*, seem to be important in classify the target values. Those previous features correspond to purchasing habits of customers. We can assume that the customers that are used to subscribe to policies are more likely to buy an insurance. 
+
+The second class of driving features are related to the socio-economic status of the customers. As expected, the *MOSTYPE* and *MOSHOOFD* features are determinant in the final purchase (see Task \@ref(task1)). However, a new important feature appears in this tables: the *MKOOPKLA* feature, which correspond to the *purchasing power class* of the customers. We can expect that the higher the power class, the higher are the chance of purchasing an insurance policy. This assumption is validated by the output of the lasso logistic regression (table \@ref(tab:lasso)) where we can see the positive value of the coefficient for the *MKOOPKLA* feature.
+ 
+```{r lasso, echo=F}
 set.seed(123)
 # 100 different lambda values
 grid <- 10^seq(-1, -8, length = 10)
@@ -541,20 +548,34 @@ kableExtra::kable(list(table4[1:(nrow(table4)/2),],
   kableExtra::kable_styling(latex_options = "HOLD_position", font_size = 9)
 ```
 
+This last table \@ref(tab:lasso) shows the features selected by the lasso regularization. I decided to display only the feature for which the coefficients are different from zero. In this table, the coefficient can be interpreted as for a logistic regression: the value of the coefficient describe  the variation of the log odds for a unit change of this feature. 
+
+**Interpretation of the selected features and comparisions with the DT and the RF:** surprisingly, we can see that the feature selected are quite different from the ones by the DT and the RF. One can think that the lasso regression, by taking off some features, also takes off the co-interactions of several features  on the target attribute. Thus, features that were driving the classification by the mean of other features are reconsider. One can think that the lasso regression allows to see the actual/true impact of the features on the target attributes. 
+
+Interestingly, the *MOSTYPE* and *MOSHOOFD* features don't appear in the lasso regularization. However, the *MKOOPKLA* is selected, with the positive impact expected. Here, the four firsts features each correspond to the number of different insurances of the customers, with all a positive coefficients. It means that the more numerous insurance a customer have, the more likely he will subscribe to an insurance. It is important to note that the *MBERBOER* (*i.e.* the farmers) feature has a negative impact, which means that the farmers are less likely to buy an insurance. One last important and surprising thing to note is the negative impact of the *MINK123M* feature, which correspond to *Income >123.000*. This results means that customers with a high income are less likely to subscribe an insurance policy. First, this is not expected and second, it goes against the positive relationship with the *MINKGEM* feature, which is the *average income* and which means that wealthier customers are more prone to subscribe to an insurance policy. 
+
 # Task 4 - Final prediction on the blind test set
 
-The final prediction is done using the Decision Tree with a complexity parameter of $0.00067$ chosen because of its highest AUC.
+The final prediction is done using the Decision Tree with a complexity parameter of $0.001$ chosen because of its highest AUC. However, we setting the cut-off threshold to $0.2$, I noticed that the number of 1 are slightly lower than 100. Thus, I decided to take the 100 firsts highest probabilities of $P(\hat{y} = 1)$ and make them equal to 1.
 
-```{r, echo=F}
+```{r}
 set.seed(123)
-T <- read.delim("C:/Users/leroy/Desktop/leroy_francois_hw2/data/test_data_t.csv", header=FALSE)
+## Load the blind dataset
+T <- read.delim("C:/Users/leroy/Desktop/leroy_francois_hw2/data/test_data_t.csv",
+                header=FALSE)
+## Write the column names
 colnames(T) <- colnames(d_train)[-86]
-## DT
+## Predict
 final_pred <- predict(opti_DT, T, type = "prob")[,2]
-final_pred <- final_pred %>% as_tibble() %>% mutate(id = seq(nrow(.))) %>% arrange(desc(value))
+## Convert the 100 firsts highest proba to 1 and the 900 others to 0
+final_pred <- final_pred %>% as_tibble() %>% 
+  mutate(id = seq(nrow(.))) %>% arrange(desc(value))
 final_pred[1:100, 1] <- 1
 final_pred[101:nrow(final_pred), 1] <- 0
 final_pred <- final_pred %>% arrange(id) %>% pull(value)
+## Check that n(1)=100 and n(0)=900
+table(final_pred)
+## Save it
 write(final_pred, "data/T.prediction.txt", ncolumns = 1)
 ```
 

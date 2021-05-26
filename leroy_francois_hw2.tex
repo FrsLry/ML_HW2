@@ -196,7 +196,7 @@
 \makeatother
 \subtitle{Homework 2}
 \author{François Leroy, PhD student at CZU}
-\date{2021-05-24}
+\date{2021-05-26}
 
 % to include pdf
 \usepackage{pdfpages}
@@ -258,8 +258,8 @@
 \end{Highlighting}
 \end{Shaded}
 
-\hypertarget{task-1---data-analysis}{%
-\chapter{Task 1 - Data analysis}\label{task-1---data-analysis}}
+\hypertarget{task1}{%
+\chapter{Task 1 - Data analysis}\label{task1}}
 
 \begin{itemize}
 \tightlist
@@ -566,7 +566,7 @@ Now, we can compute the confusion matrix with a threshold of \(0.2\):
 \chapter{Task 3 - Model interpretation and feature selection}\label{task-3---model-interpretation-and-feature-selection}}
 
 \begin{table}[H]
-\caption{\label{tab:unnamed-chunk-21}Variable importance for the decision tree}
+\caption{\label{tab:DT}Variable importance for the decision tree}
 
 \centering
 \fontsize{9}{11}\selectfont
@@ -695,8 +695,10 @@ PTRACTOR & 0.30\\
 \end{tabular}
 \end{table}
 
+The previous table \ref{tab:DT} shows the features ordered by decreasing value of the mean decrease of the Gini index for the deicision tree. The Gini index is an index of purity. Low values of Gini indicate a purer leaf node. Thus, a higher decrease in the Gini index means a feature which is more prone to classify correctly.
+
 \begin{table}[H]
-\caption{\label{tab:unnamed-chunk-22}Variable importance for the random forest}
+\caption{\label{tab:RF}Variable importance for the random forest}
 
 \centering
 \fontsize{9}{11}\selectfont
@@ -889,8 +891,14 @@ AVRAAUT & 0.00\\
 \end{tabular}
 \end{table}
 
+The table \ref{tab:RF} also shows the mean decrease of the Gini index for each feature for the random forest.
+
+\textbf{Feature analysis of the decision tree and the random forest:} we can observe from the decision tree (DT) and the random forest (RF) that the features \emph{PBRAND}, \emph{PPERSAUT}, \emph{APERSAUT} and \emph{PWAPART}, which correspond respectively to \emph{contribution fire policies}, \emph{contribution car policies}, \emph{number of car policies} and \emph{contribution private third party insurance}, seem to be important in classify the target values. Those previous features correspond to purchasing habits of customers. We can assume that the customers that are used to subscribe to policies are more likely to buy an insurance.
+
+The second class of driving features are related to the socio-economic status of the customers. As expected, the \emph{MOSTYPE} and \emph{MOSHOOFD} features are determinant in the final purchase (see Task \ref{task1}). However, a new important feature appears in this tables: the \emph{MKOOPKLA} feature, which correspond to the \emph{purchasing power class} of the customers. We can expect that the higher the power class, the higher are the chance of purchasing an insurance policy. This assumption is validated by the output of the lasso logistic regression (table \ref{tab:lasso}) where we can see the positive value of the coefficient for the \emph{MKOOPKLA} feature.
+
 \begin{table}[H]
-\caption{\label{tab:unnamed-chunk-23}Variable importance for the lasso regression}
+\caption{\label{tab:lasso}Variable importance for the lasso regression}
 
 \centering
 \fontsize{9}{11}\selectfont
@@ -969,10 +977,50 @@ PLEVEN & -0.0020227\\
 \end{tabular}
 \end{table}
 
+This last table \ref{tab:lasso} shows the features selected by the lasso regularization. I decided to display only the feature for which the coefficients are different from zero. In this table, the coefficient can be interpreted as for a logistic regression: the value of the coefficient describe the variation of the log odds for a unit change of this feature.
+
+\textbf{Interpretation of the selected features and comparisions with the DT and the RF:} surprisingly, we can see that the feature selected are quite different from the ones by the DT and the RF. One can think that the lasso regression, by taking off some features, also takes off the co-interactions of several features on the target attribute. Thus, features that were driving the classification by the mean of other features are reconsider. One can think that the lasso regression allows to see the actual/true impact of the features on the target attributes.
+
+Interestingly, the \emph{MOSTYPE} and \emph{MOSHOOFD} features don't appear in the lasso regularization. However, the \emph{MKOOPKLA} is selected, with the positive impact expected. Here, the four firsts features each correspond to the number of different insurances of the customers, with all a positive coefficients. It means that the more numerous insurance a customer have, the more likely he will subscribe to an insurance. It is important to note that the \emph{MBERBOER} (\emph{i.e.} the farmers) feature has a negative impact, which means that the farmers are less likely to buy an insurance. One last important and surprising thing to note is the negative impact of the \emph{MINK123M} feature, which correspond to \emph{Income \textgreater123.000}. This results means that customers with a high income are less likely to subscribe an insurance policy. First, this is not expected and second, it goes against the positive relationship with the \emph{MINKGEM} feature, which is the \emph{average income} and which means that wealthier customers are more prone to subscribe to an insurance policy.
+
 \hypertarget{task-4---final-prediction-on-the-blind-test-set}{%
 \chapter{Task 4 - Final prediction on the blind test set}\label{task-4---final-prediction-on-the-blind-test-set}}
 
-The final prediction is done using the Decision Tree with a complexity parameter of \(0.00067\) chosen because of its highest AUC.
+The final prediction is done using the Decision Tree with a complexity parameter of \(0.001\) chosen because of its highest AUC. However, we setting the cut-off threshold to \(0.2\), I noticed that the number of 1 are slightly lower than 100. Thus, I decided to take the 100 firsts highest probabilities of \(P(\hat{y} = 1)\) and make them equal to 1.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{123}\NormalTok{)}
+\CommentTok{## Load the blind dataset}
+\NormalTok{T <-}\StringTok{ }\KeywordTok{read.delim}\NormalTok{(}\StringTok{"C:/Users/leroy/Desktop/leroy_francois_hw2/data/test_data_t.csv"}\NormalTok{,}
+                \DataTypeTok{header=}\OtherTok{FALSE}\NormalTok{)}
+\CommentTok{## Write the column names}
+\KeywordTok{colnames}\NormalTok{(T) <-}\StringTok{ }\KeywordTok{colnames}\NormalTok{(d_train)[}\OperatorTok{-}\DecValTok{86}\NormalTok{]}
+\CommentTok{## Predict}
+\NormalTok{final_pred <-}\StringTok{ }\KeywordTok{predict}\NormalTok{(opti_DT, T, }\DataTypeTok{type =} \StringTok{"prob"}\NormalTok{)[,}\DecValTok{2}\NormalTok{]}
+\CommentTok{## Convert the 100 firsts highest proba to 1 and the 900 others to 0}
+\NormalTok{final_pred <-}\StringTok{ }\NormalTok{final_pred }\OperatorTok{%>%}\StringTok{ }\KeywordTok{as_tibble}\NormalTok{() }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{id =} \KeywordTok{seq}\NormalTok{(}\KeywordTok{nrow}\NormalTok{(.))) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{arrange}\NormalTok{(}\KeywordTok{desc}\NormalTok{(value))}
+\NormalTok{final_pred[}\DecValTok{1}\OperatorTok{:}\DecValTok{100}\NormalTok{, }\DecValTok{1}\NormalTok{] <-}\StringTok{ }\DecValTok{1}
+\NormalTok{final_pred[}\DecValTok{101}\OperatorTok{:}\KeywordTok{nrow}\NormalTok{(final_pred), }\DecValTok{1}\NormalTok{] <-}\StringTok{ }\DecValTok{0}
+\NormalTok{final_pred <-}\StringTok{ }\NormalTok{final_pred }\OperatorTok{%>%}\StringTok{ }\KeywordTok{arrange}\NormalTok{(id) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{pull}\NormalTok{(value)}
+\CommentTok{## Check that n(1)=100 and n(0)=900}
+\KeywordTok{table}\NormalTok{(final_pred)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## final_pred
+##   0   1 
+## 900 100
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{## Save it}
+\KeywordTok{write}\NormalTok{(final_pred, }\StringTok{"data/T.prediction.txt"}\NormalTok{, }\DataTypeTok{ncolumns =} \DecValTok{1}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
 
 
 \singlespacing % reset the spacing of the bibliography style
