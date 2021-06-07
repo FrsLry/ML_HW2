@@ -109,7 +109,7 @@ kableExtra::kable(list(table[1:(nrow(table)/2),],
   kableExtra::kable_styling(latex_options = "HOLD_position")
 ```
 
-This table is the same than the previous one but for the *MOSTYPE* variable, which gives more information about the social status. It is order by descending proportion of purchase. The two groups more prone to buy an insurance are the group 8 and 12, which correspond respectively to *middle class families* and *affluent young families*. Thus, we can say that families are potential good targets to sell insurances. We can see that the class 25, 26, 27 and 29 all have a low proportion of individuals buying a insurance. They are all related to old people (*i.e.*, *Young seniors in the city*, *Own home elderly*, *Seniors in apartments*, *Porchless seniors: no front yard*). Thus, as said just above for the *MOSHOOFD* variable, old people don't seem to be good targets to sell insurances. Moreover, the group 41, *i.e.* the *mixed rurals* are also less prone to subscribe an insurance, as expected with the *MOSHOOFD* variable.  
+This table is the same than the previous one but for the *MOSTYPE* variable, which gives more information about the social status. It is order by descending proportion of purchase. The two groups more prone to buy an insurance are the group 8 and 12, which correspond respectively to *middle class families* and *affluent young families*. Thus, we can say that families are potential good targets to sell insurances. We can see that the class 25, 26, 27 and 29 all have a low proportion of individuals buying a insurance. They are all related to old people (*i.e.*, *Young seniors in the city*, *Own home elderly*, *Seniors in apartments*, *Porchless seniors: no front yard*). Thus, as said just above for the *MOSHOOFD* variable, old people don't seem to be good targets to sell insurances. Moreover, the group 41, *i.e.* the *mixed rurals* are also less prone to subscribe an insurance, as expected with the *MOSHOOFD* variable (with *farmers* less prone to buy an insurance).  
 
 **1.b. Analyze the relationship between features MOSHOOFD and MOSTYPE.**
 
@@ -220,7 +220,7 @@ knitr::include_graphics("data/cv_dt.png")
 
 
 The graphique above shows the mean AUC as a function of different values of cp. The black lines represent the standard deviation and the red dots the Confidence Intervals (computed with the `t.test()` function and with $\alpha = 5\%$). 
-As we can see the mean $AUC_{0.2}$ stay stable for the six firsts values of $cp$ and increase a bit for $cp = 6.7\times10^{-3}$ and then stay stable with increasing $cp$. reducing the complexity parameter below $cp = 0.001$ doesn't change the mean $AUC_{0.2}$. The $cp$ parameter indicates the minimum change of the training error rate to consider the splitting process. As a low $cp$ means a more complex model, we are looking for the highest value of cp maximizing the mean $AUC_{0.2}$. We can see that $cp = 0.001$ is already sufficiently low. Thus, we can select $cp = 0.001$ to learn the decision tree. 
+As we can see the mean $AUC_{0.2}$ stay stable for the six firsts values of $cp$ and increase a bit for $cp = 6.7\times10^{-3}$ and then stay stable with increasing $cp$. Reducing the complexity parameter below $cp = 0.001$ doesn't change the mean $AUC_{0.2}$. The $cp$ parameter indicates the minimum change of the training error rate to consider the splitting process. As a low $cp$ means a more complex model, we are looking for the highest value of cp maximizing the mean $AUC_{0.2}$. We can see that $cp = 0.001$ is already sufficiently low. Thus, we can select $cp = 0.001$ to learn the decision tree. 
 
 
 ## Random Forest
@@ -510,7 +510,7 @@ kableExtra::kable(list(table3[1:(nrow(table3)/2),],
   kableExtra::kable_styling(latex_options = "HOLD_position", font_size = 9)
 ```
 
-The previous table \@ref(tab:DT) shows the features ordered by decreasing value of the mean decrease of the Gini index for the deicision tree. The Gini index is an index of purity. Low values of Gini indicate a purer leaf node. Thus, a higher decrease in the Gini index means a feature which is more prone to classify correctly.  
+The previous table \@ref(tab:DT) shows the features ordered by decreasing value of the mean decrease of the Gini index for the deicision tree. The Gini index is an index of impurity. Low values of Gini indicate a purer leaf node. Thus, a higher decrease in the Gini index means a feature which is more prone to classify correctly.  
 
 ```{r RF, echo=F}
 table2 <- importance(opti_RF) %>% as.data.frame() %>% arrange(desc(MeanDecreaseGini)) %>% rownames_to_column(var = "feature") %>% mutate(MeanDecreaseGini = round(MeanDecreaseGini, 2))
@@ -550,18 +550,18 @@ kableExtra::kable(list(table4[1:(nrow(table4)/2),],
 
 This last table \@ref(tab:lasso) shows the features selected by the lasso regularization. I decided to display only the feature for which the coefficients are different from zero. In this table, the coefficient can be interpreted as for a logistic regression: the value of the coefficient describe  the variation of the log odds for a unit change of this feature. 
 
-**Interpretation of the selected features and comparisions with the DT and the RF:** surprisingly, we can see that the feature selected are quite different from the ones by the DT and the RF. One can think that the lasso regression, by taking off some features, also takes off the co-interactions of several features  on the target attribute. Thus, features that were driving the classification by the mean of other features are reconsider. One can think that the lasso regression allows to see the actual/true impact of the features on the target attributes. 
+**Interpretation of the features selected by the lasso regression and comparisons with the DT and the RF:** surprisingly, we can see that the features selected are quite different from the ones by the DT and the RF. One can think that the lasso regression, by taking off some features, also takes off the co-interactions of several features  on the target attribute. Thus, features that were driving the classification by interacting with other features are reconsidered. One can think that the lasso regression allows to see the actual/true impact of the features on the target attributes. 
 
 Interestingly, the *MOSTYPE* and *MOSHOOFD* features don't appear in the lasso regularization. However, the *MKOOPKLA* is selected, with the positive impact expected. Here, the four firsts features each correspond to the number of different insurances of the customers, with all a positive coefficients. It means that the more numerous insurance a customer have, the more likely he will subscribe to an insurance. It is important to note that the *MBERBOER* (*i.e.* the farmers) feature has a negative impact, which means that the farmers are less likely to buy an insurance. One last important and surprising thing to note is the negative impact of the *MINK123M* feature, which correspond to *Income >123.000*. This results means that customers with a high income are less likely to subscribe an insurance policy. First, this is not expected and second, it goes against the positive relationship with the *MINKGEM* feature, which is the *average income* and which means that wealthier customers are more prone to subscribe to an insurance policy. 
 
 # Task 4 - Final prediction on the blind test set
 
-The final prediction is done using the Decision Tree with a complexity parameter of $0.001$ chosen because of its highest AUC. However, we setting the cut-off threshold to $0.2$, I noticed that the number of 1 are slightly lower than 100. Thus, I decided to take the 100 firsts highest probabilities of $P(\hat{y} = 1)$ and make them equal to 1.
+The final prediction is done using the Decision Tree with a complexity parameter of $0.001$ chosen because of its highest $AUC_{0.2}$. However, when setting the cut-off threshold to $0.2$, I noticed that the number of 1 are slightly lower than 100. Thus, I decided to take the 100 firsts highest probabilities of $P(\hat{y} = 1)$ and make them equal to 1.
 
 ```{r}
 set.seed(123)
 ## Load the blind dataset
-T <- read.delim("C:/Users/leroy/Desktop/leroy_francois_hw2/data/test_data_t.csv",
+T <- read.delim("data/test_data_t.csv",
                 header=FALSE)
 ## Write the column names
 colnames(T) <- colnames(d_train)[-86]

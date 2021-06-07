@@ -196,7 +196,7 @@
 \makeatother
 \subtitle{Homework 2}
 \author{François Leroy, PhD student at CZU}
-\date{2021-05-26}
+\date{2021-06-01}
 
 % to include pdf
 \usepackage{pdfpages}
@@ -426,7 +426,7 @@ group & size & purchase\_prop\\
 \end{tabular}
 \end{table}
 
-This table is the same than the previous one but for the \emph{MOSTYPE} variable, which gives more information about the social status. It is order by descending proportion of purchase. The two groups more prone to buy an insurance are the group 8 and 12, which correspond respectively to \emph{middle class families} and \emph{affluent young families}. Thus, we can say that families are potential good targets to sell insurances. We can see that the class 25, 26, 27 and 29 all have a low proportion of individuals buying a insurance. They are all related to old people (\emph{i.e.}, \emph{Young seniors in the city}, \emph{Own home elderly}, \emph{Seniors in apartments}, \emph{Porchless seniors: no front yard}). Thus, as said just above for the \emph{MOSHOOFD} variable, old people don't seem to be good targets to sell insurances. Moreover, the group 41, \emph{i.e.} the \emph{mixed rurals} are also less prone to subscribe an insurance, as expected with the \emph{MOSHOOFD} variable.
+This table is the same than the previous one but for the \emph{MOSTYPE} variable, which gives more information about the social status. It is order by descending proportion of purchase. The two groups more prone to buy an insurance are the group 8 and 12, which correspond respectively to \emph{middle class families} and \emph{affluent young families}. Thus, we can say that families are potential good targets to sell insurances. We can see that the class 25, 26, 27 and 29 all have a low proportion of individuals buying a insurance. They are all related to old people (\emph{i.e.}, \emph{Young seniors in the city}, \emph{Own home elderly}, \emph{Seniors in apartments}, \emph{Porchless seniors: no front yard}). Thus, as said just above for the \emph{MOSHOOFD} variable, old people don't seem to be good targets to sell insurances. Moreover, the group 41, \emph{i.e.} the \emph{mixed rurals} are also less prone to subscribe an insurance, as expected with the \emph{MOSHOOFD} variable (with \emph{farmers} less prone to buy an insurance).
 
 \textbf{1.b. Analyze the relationship between features MOSHOOFD and MOSTYPE.}
 
@@ -474,7 +474,7 @@ We can clearly see a relationship between these two features which are MOSHOOFD 
 \includegraphics[width=30.15in]{data/cv_dt}
 
 The graphique above shows the mean AUC as a function of different values of cp.~The black lines represent the standard deviation and the red dots the Confidence Intervals (computed with the \texttt{t.test()} function and with \(\alpha = 5\%\)).
-As we can see the mean \(AUC_{0.2}\) stay stable for the six firsts values of \(cp\) and increase a bit for \(cp = 6.7\times10^{-3}\) and then stay stable with increasing \(cp\). reducing the complexity parameter below \(cp = 0.001\) doesn't change the mean \(AUC_{0.2}\). The \(cp\) parameter indicates the minimum change of the training error rate to consider the splitting process. As a low \(cp\) means a more complex model, we are looking for the highest value of cp maximizing the mean \(AUC_{0.2}\). We can see that \(cp = 0.001\) is already sufficiently low. Thus, we can select \(cp = 0.001\) to learn the decision tree.
+As we can see the mean \(AUC_{0.2}\) stay stable for the six firsts values of \(cp\) and increase a bit for \(cp = 6.7\times10^{-3}\) and then stay stable with increasing \(cp\). Reducing the complexity parameter below \(cp = 0.001\) doesn't change the mean \(AUC_{0.2}\). The \(cp\) parameter indicates the minimum change of the training error rate to consider the splitting process. As a low \(cp\) means a more complex model, we are looking for the highest value of cp maximizing the mean \(AUC_{0.2}\). We can see that \(cp = 0.001\) is already sufficiently low. Thus, we can select \(cp = 0.001\) to learn the decision tree.
 
 \hypertarget{random-forest}{%
 \section{Random Forest}\label{random-forest}}
@@ -695,7 +695,7 @@ PTRACTOR & 0.30\\
 \end{tabular}
 \end{table}
 
-The previous table \ref{tab:DT} shows the features ordered by decreasing value of the mean decrease of the Gini index for the deicision tree. The Gini index is an index of purity. Low values of Gini indicate a purer leaf node. Thus, a higher decrease in the Gini index means a feature which is more prone to classify correctly.
+The previous table \ref{tab:DT} shows the features ordered by decreasing value of the mean decrease of the Gini index for the deicision tree. The Gini index is an index of impurity. Low values of Gini indicate a purer leaf node. Thus, a higher decrease in the Gini index means a feature which is more prone to classify correctly.
 
 \begin{table}[H]
 \caption{\label{tab:RF}Variable importance for the random forest}
@@ -979,20 +979,20 @@ PLEVEN & -0.0020227\\
 
 This last table \ref{tab:lasso} shows the features selected by the lasso regularization. I decided to display only the feature for which the coefficients are different from zero. In this table, the coefficient can be interpreted as for a logistic regression: the value of the coefficient describe the variation of the log odds for a unit change of this feature.
 
-\textbf{Interpretation of the selected features and comparisions with the DT and the RF:} surprisingly, we can see that the feature selected are quite different from the ones by the DT and the RF. One can think that the lasso regression, by taking off some features, also takes off the co-interactions of several features on the target attribute. Thus, features that were driving the classification by the mean of other features are reconsider. One can think that the lasso regression allows to see the actual/true impact of the features on the target attributes.
+\textbf{Interpretation of the features selected by the lasso regression and comparisons with the DT and the RF:} surprisingly, we can see that the features selected are quite different from the ones by the DT and the RF. One can think that the lasso regression, by taking off some features, also takes off the co-interactions of several features on the target attribute. Thus, features that were driving the classification by interacting with other features are reconsidered. One can think that the lasso regression allows to see the actual/true impact of the features on the target attributes.
 
 Interestingly, the \emph{MOSTYPE} and \emph{MOSHOOFD} features don't appear in the lasso regularization. However, the \emph{MKOOPKLA} is selected, with the positive impact expected. Here, the four firsts features each correspond to the number of different insurances of the customers, with all a positive coefficients. It means that the more numerous insurance a customer have, the more likely he will subscribe to an insurance. It is important to note that the \emph{MBERBOER} (\emph{i.e.} the farmers) feature has a negative impact, which means that the farmers are less likely to buy an insurance. One last important and surprising thing to note is the negative impact of the \emph{MINK123M} feature, which correspond to \emph{Income \textgreater123.000}. This results means that customers with a high income are less likely to subscribe an insurance policy. First, this is not expected and second, it goes against the positive relationship with the \emph{MINKGEM} feature, which is the \emph{average income} and which means that wealthier customers are more prone to subscribe to an insurance policy.
 
 \hypertarget{task-4---final-prediction-on-the-blind-test-set}{%
 \chapter{Task 4 - Final prediction on the blind test set}\label{task-4---final-prediction-on-the-blind-test-set}}
 
-The final prediction is done using the Decision Tree with a complexity parameter of \(0.001\) chosen because of its highest AUC. However, we setting the cut-off threshold to \(0.2\), I noticed that the number of 1 are slightly lower than 100. Thus, I decided to take the 100 firsts highest probabilities of \(P(\hat{y} = 1)\) and make them equal to 1.
+The final prediction is done using the Decision Tree with a complexity parameter of \(0.001\) chosen because of its highest \(AUC_{0.2}\). However, when setting the cut-off threshold to \(0.2\), I noticed that the number of 1 are slightly lower than 100. Thus, I decided to take the 100 firsts highest probabilities of \(P(\hat{y} = 1)\) and make them equal to 1.
 
 \begin{Shaded}
 \begin{Highlighting}[]
 \KeywordTok{set.seed}\NormalTok{(}\DecValTok{123}\NormalTok{)}
 \CommentTok{## Load the blind dataset}
-\NormalTok{T <-}\StringTok{ }\KeywordTok{read.delim}\NormalTok{(}\StringTok{"C:/Users/leroy/Desktop/leroy_francois_hw2/data/test_data_t.csv"}\NormalTok{,}
+\NormalTok{T <-}\StringTok{ }\KeywordTok{read.delim}\NormalTok{(}\StringTok{"data/test_data_t.csv"}\NormalTok{,}
                 \DataTypeTok{header=}\OtherTok{FALSE}\NormalTok{)}
 \CommentTok{## Write the column names}
 \KeywordTok{colnames}\NormalTok{(T) <-}\StringTok{ }\KeywordTok{colnames}\NormalTok{(d_train)[}\OperatorTok{-}\DecValTok{86}\NormalTok{]}
